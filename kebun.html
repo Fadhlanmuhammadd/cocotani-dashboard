@@ -112,7 +112,7 @@
 
   <div class="catatan">
     <p>Geser untuk memutar, cubit untuk memperbesar. Ketuk layar di dinding office untuk membuka dashboard.</p>
-    <p class="contoh" id="catatan-contoh">Tampilan contoh: angka sensor dan status agent belum terhubung ke data asli. Petani yang berjalan hanya animasi.</p>
+    <p class="contoh" id="catatan-contoh">Tampilan contoh: angka sensor dan status agent belum terhubung ke data asli. Petani dan agent yang berjalan hanya animasi.</p>
   </div>
 
   <div class="pesan" id="pesan">
@@ -264,10 +264,10 @@
       silinder(1.15, 1.15, 0.12, 0x8ec3f0, -3, 2.46, -6);
 
       /* ---------- KEBUN: papan sensor Blynk ---------- */
-      silinder(0.1, 0.1, 2.4, 0x8a8f98, -3, 1.2, 2, null, 8);
+      silinder(0.1, 0.1, 2.4, 0x8a8f98, -20.5, 1.2, -6.8, null, 8);
       const canvasSensor = bikinCanvas(360, 340);
       const spSensor = spriteDariCanvas(canvasSensor, 7.2, 6.8);
-      spSensor.sprite.position.set(-3, 5.6, 2);
+      spSensor.sprite.position.set(-20.5, 5.6, -6.8);
       scene.add(spSensor.sprite);
       let dataSensor = { online: true, suhu: 27.0, kelembapan: 65.0, ph: 6.0, tds: 800, keterangan: 'Data contoh' };
 
@@ -345,6 +345,25 @@
         return { grup: g, kakiKiri: kiri, kakiKanan: kanan };
       }
       const arah = new THREE.Vector3();
+      // Menggerakkan satu langkah ke titik tujuan [x, z]. Mengembalikan sisa jarak setelah bergerak.
+      function langkah(orang, tujuan, kecepatan, dt, t) {
+        arah.set(tujuan[0] - orang.grup.position.x, 0, tujuan[1] - orang.grup.position.z);
+        const jarak = arah.length();
+        if (jarak < 0.05) return 0;
+        arah.divideScalar(jarak);
+        const maju = Math.min(jarak, kecepatan * dt);
+        orang.grup.position.addScaledVector(arah, maju);
+        orang.grup.rotation.y = Math.atan2(arah.x, arah.z);
+        const ayun = Math.sin(t * 7) * 0.6;
+        orang.kakiKiri.rotation.x = ayun;
+        orang.kakiKanan.rotation.x = -ayun;
+        orang.grup.position.y = Math.abs(Math.sin(t * 7)) * 0.05;
+        return jarak - maju;
+      }
+      function diam(orang) {
+        orang.kakiKiri.rotation.x = 0;
+        orang.kakiKanan.rotation.x = 0;
+      }
       function patroli(orang, titik, kecepatan) {
         let i = 0;
         let jeda = Math.random() * 2;
@@ -352,26 +371,15 @@
         const fn = function (dt, t) {
           if (jeda > 0) {
             jeda -= dt;
-            orang.kakiKiri.rotation.x = 0;
-            orang.kakiKanan.rotation.x = 0;
+            diam(orang);
             orang.grup.position.y = 0;
             return;
           }
-          const tujuan = titik[(i + 1) % titik.length];
-          arah.set(tujuan[0] - orang.grup.position.x, 0, tujuan[1] - orang.grup.position.z);
-          const jarak = arah.length();
-          if (jarak < 0.05) {
+          const sisa = langkah(orang, titik[(i + 1) % titik.length], kecepatan, dt, t);
+          if (sisa < 0.05) {
             i = (i + 1) % titik.length;
             jeda = 1 + Math.random() * 2.5;
-            return;
           }
-          arah.divideScalar(jarak);
-          orang.grup.position.addScaledVector(arah, Math.min(jarak, kecepatan * dt));
-          orang.grup.rotation.y = Math.atan2(arah.x, arah.z);
-          const ayun = Math.sin(t * 7) * 0.6;
-          orang.kakiKiri.rotation.x = ayun;
-          orang.kakiKanan.rotation.x = -ayun;
-          orang.grup.position.y = Math.abs(Math.sin(t * 7)) * 0.05;
         };
         fn.dekoratif = true;
         animasi.push(fn);
@@ -420,6 +428,79 @@
       layar.position.set(14.5, 3.3, -7.43);
       scene.add(layar);
       klikTarget.push(layar);
+
+      /* ---------- OFFICE: logo Cocotani di dinding barat ---------- */
+      const canvasLogo = bikinCanvas(1024, 384);
+      function gambarLogoCadangan(ctx) {
+        // Dipakai kalau berkas logo-cocotani.png belum ada: gambar sederhana yang mirip logo.
+        ctx.strokeStyle = '#2a86c8';
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(150, 70);
+        ctx.bezierCurveTo(150, 70, 92, 140, 92, 215);
+        ctx.arc(150, 215, 58, Math.PI, 0, true);
+        ctx.bezierCurveTo(208, 140, 150, 70, 150, 70);
+        ctx.stroke();
+        ctx.strokeStyle = '#7fc241';
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(150, 130);
+        ctx.lineTo(150, 250);
+        [[160, 12], [190, 14], [220, 12]].forEach(function (d) {
+          ctx.moveTo(150, d[0]);
+          ctx.lineTo(150 - 24, d[0] - d[1]);
+          ctx.moveTo(150, d[0]);
+          ctx.lineTo(150 + 24, d[0] - d[1]);
+        });
+        ctx.stroke();
+        ctx.fillStyle = '#7fc241';
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+        ctx.font = 'italic 700 150px system-ui, sans-serif';
+        ctx.fillText('cocotani', 260, 225);
+        ctx.font = '500 38px system-ui, sans-serif';
+        let x = 268;
+        'HYDROPONIC FARMING'.split('').forEach(function (ch) {
+          ctx.fillText(ch, x, 292);
+          x += ctx.measureText(ch).width + 7;
+        });
+      }
+      function gambarLogo(img) {
+        const ctx = canvasLogo.getContext('2d');
+        const W = canvasLogo.width;
+        const H = canvasLogo.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#000000';
+        bulatRect(ctx, 0, 0, W, H, 30);
+        ctx.fill();
+        if (img && img.width > 0) {
+          const pad = 0.09;
+          const skala = Math.min((W * (1 - 2 * pad)) / img.width, (H * (1 - 2 * pad)) / img.height);
+          const w = img.width * skala;
+          const h = img.height * skala;
+          ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+        } else {
+          gambarLogoCadangan(ctx);
+        }
+      }
+      gambarLogo(null);
+      const texLogo = new THREE.CanvasTexture(canvasLogo);
+      texLogo.colorSpace = THREE.SRGBColorSpace;
+      texLogo.anisotropy = 8;
+      const papanLogo = new THREE.Mesh(new THREE.PlaneGeometry(8, 3), new THREE.MeshBasicMaterial({ map: texLogo }));
+      papanLogo.rotation.y = Math.PI / 2;
+      papanLogo.position.set(3.42, 3.3, 0);
+      scene.add(papanLogo);
+      api.setLogoGambar = function (img) {
+        gambarLogo(img);
+        try {
+          // Kalau gambar dianggap lintas-asal (misalnya dibuka langsung dari berkas), kanvas tidak bisa dipakai sebagai tekstur.
+          canvasLogo.getContext('2d').getImageData(0, 0, 1, 1);
+        } catch (err) {
+          gambarLogo(null);
+        }
+        texLogo.needsUpdate = true;
+      };
 
       /* ---------- OFFICE: karpet, meja rapat, tanaman ---------- */
       silinder(4.2, 4.2, 0.04, 0xd3c5a8, 11, 0.02, 1, null, 40);
@@ -471,18 +552,42 @@
         ctx.fillText(teks, W / 2, H / 2 + 1);
         ctx.textAlign = 'left';
       }
-      function bikinAgen(id, nama, warna, x, z, lebarLabel) {
+      const PUSAT_MEJA = [11, 1];
+      const RADIUS_JALUR = 3.9;
+      const jalur = [];
+      for (let k = 0; k < 12; k++) {
+        const sudut = k * Math.PI / 6;
+        jalur.push([PUSAT_MEJA[0] + RADIUS_JALUR * Math.cos(sudut), PUSAT_MEJA[1] + RADIUS_JALUR * Math.sin(sudut)]);
+      }
+      // Tempat singgah di luar jalur: layar dashboard, jendela, tanaman.
+      const stasiun = {
+        10: { pos: [14.5, -6.2], hadap: [0, -1], lama: [3, 5] },
+        8: { pos: [6.5, -6.2], hadap: [0, -1], lama: [2, 4] },
+        5: { pos: [5.6, 5.2], hadap: [-1, 1], lama: [2, 4] }
+      };
+      info.jalur = jalur;
+      info.stasiun = stasiun;
+
+      function bikinAgen(id, nama, warna, idxAwal, lebarLabel) {
         const g = new THREE.Group();
-        g.position.set(x, 0, z);
-        kotak(0.4, 0.9, 0.4, 0x3d4a5c, -0.3, 0.45, 0, g);
-        kotak(0.4, 0.9, 0.4, 0x3d4a5c, 0.3, 0.45, 0, g);
+        const kiri = new THREE.Group();
+        const kanan = new THREE.Group();
+        kiri.position.set(-0.3, 0.9, 0);
+        kanan.position.set(0.3, 0.9, 0);
+        kotak(0.4, 0.9, 0.4, 0x3d4a5c, 0, -0.45, 0, kiri);
+        kotak(0.4, 0.9, 0.4, 0x3d4a5c, 0, -0.45, 0, kanan);
+        g.add(kiri);
+        g.add(kanan);
         kotak(1.1, 1.2, 0.7, warna, 0, 1.5, 0, g);
         kotak(0.9, 0.8, 0.8, 0xd5dde8, 0, 2.5, 0, g);
         kotak(0.14, 0.14, 0.05, 0x1f2430, -0.2, 2.55, 0.42, g);
         kotak(0.14, 0.14, 0.05, 0x1f2430, 0.2, 2.55, 0.42, g);
         kotak(0.06, 0.4, 0.06, 0x8a97a8, 0, 3.1, 0, g);
         bola(0.12, 0xf59e0b, 0, 3.4, 0, g);
-        g.rotation.y = Math.atan2(11 - x, 1 - z);
+        const x = jalur[idxAwal][0];
+        const z = jalur[idxAwal][1];
+        g.position.set(x, 0, z);
+        g.rotation.y = Math.atan2(PUSAT_MEJA[0] - x, PUSAT_MEJA[1] - z);
         scene.add(g);
 
         const cl = bikinCanvas(Math.round(lebarLabel * 40), 64);
@@ -497,22 +602,117 @@
         sg.sprite.visible = false;
         scene.add(sg.sprite);
 
-        const agen = { id: id, nama: nama, grup: g, canvasLabel: cl, texLabel: sl.tex, canvasGelembung: cg, texGelembung: sg.tex, spriteGelembung: sg.sprite, sisa: 0, fase: Math.random() * 6 };
+        const agen = {
+          id: id, nama: nama, grup: g, kakiKiri: kiri, kakiKanan: kanan, idx: idxAwal,
+          canvasLabel: cl, texLabel: sl.tex, spriteLabel: sl.sprite,
+          canvasGelembung: cg, texGelembung: sg.tex, spriteGelembung: sg.sprite,
+          sisa: 0, fase: Math.random() * 6, kunjungan: 0
+        };
         info.agen[id] = agen;
+        jalankanAgen(agen);
         return agen;
       }
-      bikinAgen('pengingat', 'Pengingat', 0x2f9e8f, 7.6, 1, 7);
-      bikinAgen('cuaca', 'Cuaca', 0x3b82c4, 14.4, 1, 6);
-      bikinAgen('riset', 'Riset sosmed', 0x7c6bd6, 11, -2.4, 7);
 
-      const gerakAgen = function (dt, t) {
-        Object.keys(info.agen).forEach(function (id) {
-          const a = info.agen[id];
-          a.grup.position.y = Math.sin(t * 1.6 + a.fase) * 0.06;
-        });
-      };
-      gerakAgen.dekoratif = true;
-      animasi.push(gerakAgen);
+      // Agent berkeliling meja rapat, sesekali singgah ke layar, jendela, atau tanaman. Hanya animasi.
+      function jalankanAgen(a) {
+        let keadaan = 'jalur';
+        let jeda = Math.random() * 3;
+        let hadapX = 0;
+        let hadapZ = 0;
+        const KECEPATAN = 1.3;
+        let tunggu = 0;
+        // Tujuan dianggap terhalang kalau ada agent lain berdiri di dekatnya.
+        function terhalang(tujuan) {
+          return Object.keys(info.agen).some(function (id) {
+            const b = info.agen[id];
+            if (b === a) return false;
+            return Math.hypot(b.grup.position.x - tujuan[0], b.grup.position.z - tujuan[1]) < 1.3;
+          });
+        }
+        // Agent lain yang lebih dekat ke tujuan dan sudah terlalu dekat dengan kita: biarkan lewat dulu.
+        function terlaluDekat(tujuan) {
+          const sendiri = Math.hypot(a.grup.position.x - tujuan[0], a.grup.position.z - tujuan[1]);
+          return Object.keys(info.agen).some(function (id) {
+            const b = info.agen[id];
+            if (b === a) return false;
+            const jarakAntar = Math.hypot(b.grup.position.x - a.grup.position.x, b.grup.position.z - a.grup.position.z);
+            if (jarakAntar >= 1.1) return false;
+            const milik = Math.hypot(b.grup.position.x - tujuan[0], b.grup.position.z - tujuan[1]);
+            return milik < sendiri || (milik === sendiri && a.id > b.id);
+          });
+        }
+        // Mengembalikan true kalau agent harus menunggu (maksimal 4 detik).
+        function perluTunggu(tujuan, dt) {
+          if (tunggu < 4 && (terhalang(tujuan) || terlaluDekat(tujuan))) {
+            tunggu += dt;
+            diam(a);
+            a.grup.position.y = 0;
+            return true;
+          }
+          return false;
+        }
+        const fn = function (dt, t) {
+          const p = a.grup.position;
+          if (keadaan === 'jalur') {
+            const tujuan = jalur[(a.idx + 1) % jalur.length];
+            if (perluTunggu(tujuan, dt)) return;
+            const sisa = langkah(a, tujuan, KECEPATAN, dt, t);
+            if (sisa < 0.05) {
+              tunggu = 0;
+              a.idx = (a.idx + 1) % jalur.length;
+              const st = stasiun[a.idx];
+              if (st && Math.random() < 0.35) {
+                keadaan = 'ke-stasiun';
+              } else if (Math.random() < 0.3) {
+                keadaan = 'jeda';
+                jeda = 1 + Math.random() * 2;
+                hadapX = PUSAT_MEJA[0] - p.x;
+                hadapZ = PUSAT_MEJA[1] - p.z;
+              }
+            }
+          } else if (keadaan === 'ke-stasiun') {
+            const st = stasiun[a.idx];
+            if (terhalang(st.pos)) {
+              // Tempat singgah sedang dipakai agent lain: lewati kunjungan ini.
+              keadaan = 'jalur';
+              return;
+            }
+            const sisa = langkah(a, st.pos, KECEPATAN, dt, t);
+            if (sisa < 0.05) {
+              tunggu = 0;
+              keadaan = 'di-stasiun';
+              jeda = st.lama[0] + Math.random() * (st.lama[1] - st.lama[0]);
+              hadapX = st.hadap[0];
+              hadapZ = st.hadap[1];
+              a.kunjungan++;
+            }
+          } else if (keadaan === 'kembali') {
+            if (perluTunggu(jalur[a.idx], dt)) return;
+            const sisa = langkah(a, jalur[a.idx], KECEPATAN, dt, t);
+            if (sisa < 0.05) {
+              tunggu = 0;
+              keadaan = 'jalur';
+            }
+          } else {
+            // 'jeda' atau 'di-stasiun': berdiri, menghadap target, badan sedikit bergoyang
+            jeda -= dt;
+            diam(a);
+            a.grup.rotation.y = Math.atan2(hadapX, hadapZ);
+            a.grup.position.y = Math.sin(t * 1.6 + a.fase) * 0.06;
+            if (jeda <= 0) keadaan = keadaan === 'di-stasiun' ? 'kembali' : 'jalur';
+          }
+          if (keadaan === 'jalur' && jeda > 0) jeda = 0;
+          a.spriteLabel.position.set(p.x, 4.9, p.z);
+          a.spriteGelembung.position.set(p.x, 7, p.z);
+        };
+        fn.dekoratif = true;
+        animasi.push(fn);
+      }
+
+      bikinAgen('pengingat', 'Pengingat', 0x2f9e8f, 6, 7);
+      bikinAgen('cuaca', 'Cuaca', 0x3b82c4, 0, 6);
+      bikinAgen('riset', 'Riset sosmed', 0x7c6bd6, 9, 7);
+
       animasi.push(function (dt) {
         Object.keys(info.agen).forEach(function (id) {
           const a = info.agen[id];
@@ -560,7 +760,7 @@
 
     const dunia = buatDunia(THREE);
 
-    const pusat = new THREE.Vector3(-1.5, 1, 0);
+    const pusat = new THREE.Vector3(-1.5, 4, 0);
     const kamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 300);
     kamera.position.set(pusat.x + 34, pusat.y + 30, pusat.z + 34);
     kamera.lookAt(pusat);
@@ -582,7 +782,7 @@
       const w = wadah.clientWidth || window.innerWidth;
       const h = wadah.clientHeight || window.innerHeight;
       const aspek = w / h;
-      const tinggiPandang = Math.max(34, 58 / aspek);
+      const tinggiPandang = Math.max(33, 46 / aspek);
       kamera.left = -tinggiPandang * aspek / 2;
       kamera.right = tinggiPandang * aspek / 2;
       kamera.top = tinggiPandang / 2;
@@ -605,6 +805,11 @@
       kontrol.update();
       renderer.render(dunia.scene, kamera);
     });
+
+    /* Logo di dinding office: memakai berkas logo-cocotani.png kalau ada di folder yang sama. */
+    const berkasLogo = new Image();
+    berkasLogo.onload = function () { dunia.api.setLogoGambar(berkasLogo); };
+    berkasLogo.src = 'logo-cocotani.png';
 
     /* Ketuk layar di dinding office untuk membuka dashboard */
     const raycaster = new THREE.Raycaster();
