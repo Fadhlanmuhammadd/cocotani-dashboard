@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani</title>
+  <title>Kebun dan office Cocotani (v11)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -13,6 +13,8 @@
       --teks-redup: #8fa08b;
       --hijau: #86c440;
       --tinggi-bar: 52px;
+      --tinggi-nav: 46px;
+      --tinggi-footer: 0px;
     }
     * { box-sizing: border-box; }
     html, body {
@@ -59,29 +61,109 @@
 
     #kanvas {
       position: fixed;
-      inset: var(--tinggi-bar) 0 0 0;
+      inset: calc(var(--tinggi-bar) + var(--tinggi-nav)) 0 var(--tinggi-footer) 0;
       touch-action: none;
     }
     #kanvas canvas { display: block; }
 
-    .catatan {
+
+    .kontrol {
       position: fixed;
-      left: 16px;
-      right: 16px;
-      bottom: 12px;
-      z-index: 2;
-      pointer-events: none;
-      font-size: 0.8125rem;
-      line-height: 1.5;
-      color: var(--teks-redup);
+      inset: var(--tinggi-bar) 0 auto 0;
+      height: var(--tinggi-nav);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      background: var(--latar);
+      border-bottom: 1px solid var(--garis);
+      z-index: 3;
     }
-    .catatan p { margin: 0; }
-    .catatan .contoh { color: #d8b45a; }
-    .catatan .versi { color: #5f6f5b; }
+    .kontrol .grup { display: flex; gap: 6px; flex: none; }
+    .kontrol .pemisah { width: 1px; height: 22px; background: var(--garis); flex: none; }
+    .kontrol .waktu { flex: none; color: var(--teks-redup); font-size: 0.8125rem; white-space: nowrap; }
+    .kontrol button {
+      flex: none;
+      padding: 6px 12px;
+      border: 1px solid var(--garis);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--teks);
+      font: inherit;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+    .kontrol button:hover { border-color: var(--hijau); }
+    .kontrol button:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
+    .kontrol button.aktif { background: var(--hijau); border-color: var(--hijau); color: #000; font-weight: 600; }
+
+
+    .jobdesk {
+      position: fixed;
+      inset: auto 0 0 0;
+      z-index: 3;
+      background: var(--latar);
+      border-top: 1px solid var(--garis);
+    }
+    .jobdesk-kepala {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+    }
+    .jobdesk-kepala h2 { margin: 0; font-size: 0.875rem; font-weight: 600; }
+    .jobdesk-kepala h2 span { color: var(--teks-redup); font-weight: 400; }
+    .jobdesk-kepala button {
+      flex: none;
+      padding: 4px 10px;
+      border: 1px solid var(--garis);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--teks);
+      font: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .jobdesk-kepala button:hover { border-color: var(--hijau); }
+    .jobdesk-kepala button:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
+    .jobdesk-isi {
+      display: none;
+      gap: 10px;
+      padding: 0 16px 14px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .jobdesk.buka .jobdesk-isi { display: flex; }
+    .kartu {
+      flex: 0 0 268px;
+      border: 1px solid var(--garis);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .kartu-atas { display: flex; align-items: center; gap: 8px; }
+    .kartu .titik { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+    .kartu h3 { margin: 0; font-size: 0.875rem; font-weight: 600; }
+    .kartu .nama { margin: 2px 0 6px 18px; font-size: 0.75rem; color: var(--teks-redup); }
+    .kartu p { margin: 0; font-size: 0.8125rem; line-height: 1.45; }
+    .chip {
+      margin-left: auto;
+      flex: none;
+      padding: 1px 8px;
+      border: 1px solid;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+    }
+    .chip.aktif { color: #86c440; border-color: #86c440; }
+    .chip.belum { color: #d8b45a; border-color: #d8b45a; }
+    .chip.pemilik { color: #79b8ff; border-color: #79b8ff; }
 
     .pesan {
       position: fixed;
-      inset: var(--tinggi-bar) 0 0 0;
+      inset: calc(var(--tinggi-bar) + var(--tinggi-nav)) 0 var(--tinggi-footer) 0;
       display: none;
       place-content: center;
       padding: 24px;
@@ -109,13 +191,64 @@
     <a class="tombol" href="./">Dashboard keuangan</a>
   </header>
 
+  <nav class="kontrol" aria-label="Kontrol tampilan">
+    <div class="grup">
+      <button type="button" data-fokus="semua" class="aktif">Semua</button>
+      <button type="button" data-fokus="kebun">Kebun</button>
+      <button type="button" data-fokus="kerja">Kerja</button>
+      <button type="button" data-fokus="meeting">Meeting</button>
+      <button type="button" data-fokus="studio">Studio</button>
+      <button type="button" data-fokus="owner">Owner</button>
+      <button type="button" data-fokus="musholla">Musholla</button>
+      <button type="button" data-fokus="lobi">Lobi</button>
+      <button type="button" data-fokus="santai">Santai</button>
+    </div>
+    <span class="pemisah"></span>
+    <div class="grup">
+      <button type="button" id="tombol-tur">Tur</button>
+      <button type="button" id="tombol-malam">Malam</button>
+      <button type="button" id="tombol-neon" class="aktif">Neon</button>
+      <button type="button" id="tombol-foto">Foto</button>
+      <button type="button" id="tombol-sholat" title="Simulasikan waktu sholat sekarang">Sholat</button>
+    </div>
+    <span class="waktu" id="waktu-sholat"></span>
+  </nav>
+
   <div id="kanvas" aria-label="Tampilan 3D kebun hidroponik dan office agent"></div>
 
-  <div class="catatan">
-    <p>Geser untuk memutar, cubit untuk memperbesar. Ketuk layar di dinding office untuk membuka dashboard.</p>
-    <p class="versi">Versi 7 (angka sensor dari Blynk)</p>
-    <p class="contoh" id="catatan-contoh">Tampilan contoh: angka sensor dan status agent belum terhubung ke data asli. Petani dan agent yang berjalan hanya animasi.</p>
-  </div>
+  <footer class="jobdesk" id="jobdesk">
+    <div class="jobdesk-kepala">
+      <h2>Jobdesk agent <span>siapa mengerjakan apa</span></h2>
+      <button type="button" id="tombol-jobdesk" aria-expanded="false" aria-controls="isi-jobdesk">Tampilkan</button>
+    </div>
+    <div class="jobdesk-isi" id="isi-jobdesk">
+      <article class="kartu">
+        <div class="kartu-atas"><span class="titik" style="background:#2f9e8f"></span><h3>Schedule Master</h3><span class="chip aktif">Aktif</span></div>
+        <div class="nama">Agent pengingat</div>
+        <p>Mengingatkan token listrik, PDAM, kuota CCTV, kuota petani, dan kuras tandon lewat Telegram. Mencatat pemakaian token.</p>
+      </article>
+      <article class="kartu">
+        <div class="kartu-atas"><span class="titik" style="background:#3b82c4"></span><h3>Climate Analyst</h3><span class="chip aktif">Aktif</span></div>
+        <div class="nama">Agent cuaca</div>
+        <p>Membaca prakiraan BMKG tiap hari jam 10.00 WITA dan memberi peringatan kalau ada hujan lebat atau petir.</p>
+      </article>
+      <article class="kartu">
+        <div class="kartu-atas"><span class="titik" style="background:#7c6bd6"></span><h3>Growth Strategist</h3><span class="chip belum">Belum dibuat</span></div>
+        <div class="nama">Agent riset sosmed</div>
+        <p>Meriset akun hidroponik lain di Instagram dan TikTok, lalu menyarankan ide konten dan jadwal posting.</p>
+      </article>
+      <article class="kartu">
+        <div class="kartu-atas"><span class="titik" style="background:#16213a;box-shadow:0 0 0 1px #5b6b8f"></span><h3>Founder &amp; CEO</h3><span class="chip pemilik">Pemilik</span></div>
+        <div class="nama">Peran pemilik Cocotani</div>
+        <p>Mengambil keputusan, menerima laporan semua agent di Telegram, dan menyetujui apa yang akan diposting.</p>
+      </article>
+      <article class="kartu">
+        <div class="kartu-atas"><span class="titik" style="background:#f2845c"></span><h3>Cashflow Controller</h3><span class="chip belum">Belum dibuat</span></div>
+        <div class="nama">Agent operasional</div>
+        <p>Mencatat pemasukan dan pengeluaran ke spreadsheet keuangan setelah dikonfirmasi pemilik. Tanpa akses transfer.</p>
+      </article>
+    </div>
+  </footer>
 
   <div class="pesan" id="pesan">
     <p>Tampilan 3D tidak bisa dimuat di browser ini.<br>Coba buka dengan Chrome atau Safari versi terbaru.</p>
@@ -140,21 +273,24 @@
       const info = { rak: [], orang: [], agen: {} };
 
       /* ---------- Cahaya ---------- */
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x6f7f66, 0.95));
+      const hemi = new THREE.HemisphereLight(0xffffff, 0x6f7f66, 0.95);
+      scene.add(hemi);
       const matahari = new THREE.DirectionalLight(0xffffff, 1.0);
-      matahari.position.set(18, 40, 22);
-      matahari.target.position.set(2.5, 0, 0);
+      matahari.position.set(29.5, 40, 26);
+      matahari.target.position.set(11.5, 0, 4);
       matahari.castShadow = true;
       matahari.shadow.mapSize.set(2048, 2048);
       matahari.shadow.bias = -0.0005;
       const sk = matahari.shadow.camera;
-      sk.left = -38; sk.right = 38; sk.top = 38; sk.bottom = -38; sk.near = 1; sk.far = 120;
+      sk.left = -54; sk.right = 54; sk.top = 54; sk.bottom = -54; sk.near = 1; sk.far = 140;
       scene.add(matahari);
       scene.add(matahari.target);
 
       /* ---------- Helper bentuk ---------- */
+      const cacheBahan = {};
       function mat(warna) {
-        return new THREE.MeshLambertMaterial({ color: warna });
+        if (!cacheBahan[warna]) cacheBahan[warna] = new THREE.MeshLambertMaterial({ color: warna });
+        return cacheBahan[warna];
       }
       function kotak(w, h, d, warna, x, y, z, induk) {
         const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(warna));
@@ -221,9 +357,66 @@
         return typeof v === 'number' && isFinite(v) ? v.toFixed(n).replace('.', ',') : '-';
       }
 
-      /* ---------- Lantai kebun dan office ---------- */
+      /* ---------- Siang dan malam ---------- */
+      const daftarMalam = []; // bahan yang berubah warna: { bahan, siang, malam }
+      const daftarHalo = []; // halo cahaya yang hanya tampil malam hari
+      const texHalo = (function () {
+        const c = bikinCanvas(128, 128);
+        const ctx = c.getContext('2d');
+        const g = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+        g.addColorStop(0, 'rgba(255,245,215,1)');
+        g.addColorStop(0.35, 'rgba(255,225,160,0.5)');
+        g.addColorStop(1, 'rgba(255,205,120,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, 128, 128);
+        const t = new THREE.CanvasTexture(c);
+        t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      })();
+      function halo(x, y, z, ukuran, warna, maks) {
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+          map: texHalo, color: warna, transparent: true, opacity: 0,
+          depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending
+        }));
+        sp.position.set(x, y, z);
+        sp.scale.set(ukuran, ukuran, 1);
+        sp.renderOrder = 5;
+        scene.add(sp);
+        daftarHalo.push({ sprite: sp, maks: maks || 0.85 });
+      }
+      function lampuHias(x, y, z, r, tali) {
+        const bahan = new THREE.MeshBasicMaterial({ color: 0xd8d2b8 });
+        const badan = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 10), bahan);
+        badan.position.set(x, y, z);
+        scene.add(badan);
+        daftarMalam.push({ bahan: bahan, siang: 0xd8d2b8, malam: 0xfff1c0 });
+        halo(x, y, z, r * 14, 0xffd98a, 0.85);
+        if (tali) kotak(0.03, tali, 0.03, 0x3d4a5c, x, y + r + tali / 2, z);
+        return badan;
+      }
+      function bahanBercahaya(warnaSiang, warnaMalam) {
+        const bahan = new THREE.MeshBasicMaterial({ color: warnaSiang });
+        daftarMalam.push({ bahan: bahan, siang: warnaSiang, malam: warnaMalam });
+        return bahan;
+      }
+      const latarSiang = new THREE.Color(0x0a110b);
+      const latarMalam = new THREE.Color(0x04070d);
+      api.setMalam = function (on) {
+        hemi.intensity = on ? 0.38 : 0.95;
+        hemi.color.setHex(on ? 0x8fa4d6 : 0xffffff);
+        matahari.intensity = on ? 0.22 : 1.0;
+        matahari.color.setHex(on ? 0xa9bce8 : 0xffffff);
+        scene.background = on ? latarMalam : latarSiang;
+        daftarMalam.forEach(function (d) { d.bahan.color.setHex(on ? d.malam : d.siang); });
+        daftarHalo.forEach(function (h) { h.sprite.material.opacity = on ? h.maks : 0; });
+      };
+
+      /* ---------- Lantai ---------- */
       lantai(-22, -2, -8, 8, 0xd7e3c3, 0x9aab82); // kebun
-      lantai(3, 27, -8, 8, 0xe6dfcf, 0xa89f8d); // office
+      lantai(3, 35, -8, 16, 0xe6dfcf, 0xa89f8d); // office
+      lantai(35, 45, -8, 6, 0xe6dfcf, 0xa89f8d); // ruang owner dan ujung jalan tengah
+      lantai(35, 45, 6, 16, 0xe6dfcf, 0xa89f8d); // musholla
+      lantai(-2, 3, 2.4, 5.6, 0xc9b79a, 0x8d7b5e); // jembatan kayu penghubung
 
       /* ---------- KEBUN: rak selada ---------- */
       const ZRAK = [-4, 0, 4];
@@ -328,12 +521,69 @@
         spSensor.tex.needsUpdate = true;
       };
 
+
+      /* ---------- KEBUN: rumah tanam, air mengalir, lampu ---------- */
+      [[-21, -7], [-21, 7], [-12, -7], [-12, 7], [-3.2, 7], [-3.2, 0]].forEach(function (p) {
+        kotak(0.18, 4.7, 0.18, 0x9aa3a8, p[0], 2.35, p[1]);
+      });
+      [-7, 7].forEach(function (z) { kotak(18, 0.14, 0.14, 0x9aa3a8, -12.1, 4.7, z); });
+      [-21, -12, -3.2].forEach(function (x) { kotak(0.14, 0.14, 14, 0x9aa3a8, x, 4.7, 0); });
+      const atapKebun = new THREE.Mesh(
+        new THREE.PlaneGeometry(18.2, 14.2),
+        new THREE.MeshLambertMaterial({ color: 0xdfffe0, transparent: true, opacity: 0.13, depthWrite: false })
+      );
+      atapKebun.rotation.x = -Math.PI / 2;
+      atapKebun.position.set(-12.1, 4.72, 0);
+      scene.add(atapKebun);
+
+      const texAir = (function () {
+        const c = bikinCanvas(128, 16);
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#4aa3df';
+        ctx.fillRect(0, 0, 128, 16);
+        ctx.fillStyle = '#b4e1ff';
+        for (let i = 0; i < 4; i++) ctx.fillRect(i * 32 + 4, 5, 18, 6);
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = THREE.RepeatWrapping;
+        t.repeat.set(7, 1);
+        t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      })();
+      ZRAK.forEach(function (zr) {
+        const aliran = new THREE.Mesh(new THREE.PlaneGeometry(XB - XA, 0.32), new THREE.MeshBasicMaterial({ map: texAir }));
+        aliran.rotation.x = -Math.PI / 2;
+        aliran.position.set((XA + XB) / 2, 1.16, zr);
+        scene.add(aliran);
+        // lampu tumbuh di atas rak
+        const bahanGrow = bahanBercahaya(0x9a8fb5, 0xd58bff);
+        const grow = new THREE.Mesh(new THREE.BoxGeometry(XB - XA - 1, 0.12, 0.5), bahanGrow);
+        grow.position.set((XA + XB) / 2, 3.3, zr);
+        scene.add(grow);
+        [XA + 1, XB - 1].forEach(function (x) { kotak(0.05, 1.4, 0.05, 0x6b7280, x, 4.0, zr); });
+        [-15, -11, -7].forEach(function (x) { halo(x, 3.2, zr, 5.5, 0xc77dff, 0.7); });
+      });
+      const gerakAir = function (dt) { texAir.offset.x -= dt * 0.35; };
+      gerakAir.dekoratif = true;
+      animasi.push(gerakAir);
+
+      // lampu jalan di jembatan kayu
+      [[-1.2, 2.2], [-1.2, 5.8], [2.2, 2.2], [2.2, 5.8]].forEach(function (p) {
+        silinder(0.06, 0.06, 1.8, 0x6b7280, p[0], 0.9, p[1], null, 8);
+        lampuHias(p[0], 1.95, p[1], 0.22, 0);
+      });
+
       /* ---------- Manusia (petani dan agent) ---------- */
       function bikinManusia(o) {
         const g = new THREE.Group();
         const celana = o.celana || 0x2d3748;
         const kulit = o.kulit || 0xf0c9a0;
         const baju = o.baju;
+        const badan = new THREE.Group();
+        badan.position.set(0, 0.95, 0);
+        const isi = new THREE.Group();
+        isi.position.set(0, -0.95, 0);
+        badan.add(isi);
+        g.add(badan);
         function kaki(x) {
           const paha = new THREE.Group();
           paha.position.set(x, 0.95, 0);
@@ -351,20 +601,20 @@
           bahu.position.set(x, 1.95, 0);
           kotak(0.26, 0.8, 0.26, o.lenganBaju || baju, 0, -0.4, 0, bahu);
           bola(0.14, kulit, 0, -0.88, 0, bahu);
-          g.add(bahu);
+          isi.add(bahu);
           return bahu;
         }
         const kiri = kaki(-0.24);
         const kanan = kaki(0.24);
         const lKiri = lengan(-0.62);
         const lKanan = lengan(0.62);
-        kotak(0.95, 1.05, 0.5, baju, 0, 1.5, 0, g);
-        bola(0.4, kulit, 0, 2.4, 0, g);
-        kotak(0.09, 0.12, 0.04, 0x1f2430, -0.14, 2.42, 0.38, g);
-        kotak(0.09, 0.12, 0.04, 0x1f2430, 0.14, 2.42, 0.38, g);
+        kotak(0.95, 1.05, 0.5, baju, 0, 1.5, 0, isi);
+        bola(0.4, kulit, 0, 2.4, 0, isi);
+        kotak(0.09, 0.12, 0.04, 0x1f2430, -0.14, 2.42, 0.38, isi);
+        kotak(0.09, 0.12, 0.04, 0x1f2430, 0.14, 2.42, 0.38, isi);
         if (o.topi) {
-          silinder(0.78, 0.78, 0.08, 0xd9b45a, 0, 2.72, 0, g, 16);
-          silinder(0.34, 0.4, 0.26, 0xd9b45a, 0, 2.88, 0, g, 12);
+          silinder(0.78, 0.78, 0.08, 0xd9b45a, 0, 2.72, 0, isi, 16);
+          silinder(0.34, 0.4, 0.26, 0xd9b45a, 0, 2.88, 0, isi, 12);
         } else {
           const rambut = new THREE.Mesh(
             new THREE.SphereGeometry(0.44, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.42),
@@ -372,31 +622,75 @@
           );
           rambut.position.set(0, 2.42, -0.02);
           rambut.castShadow = true;
-          g.add(rambut);
-          kotak(0.8, 0.55, 0.22, o.rambut, 0, 2.45, -0.32, g);
+          isi.add(rambut);
+          kotak(0.8, 0.55, 0.22, o.rambut, 0, 2.45, -0.32, isi);
           if (o.kuncir) {
-            bola(0.17, o.rambut, 0, 2.3, -0.55, g);
-            kotak(0.18, 0.5, 0.18, o.rambut, 0, 1.95, -0.58, g);
+            bola(0.17, o.rambut, 0, 2.3, -0.55, isi);
+            kotak(0.18, 0.5, 0.18, o.rambut, 0, 1.95, -0.58, isi);
           }
         }
         if (o.headphone) {
-          kotak(0.92, 0.07, 0.12, 0x1f2430, 0, 2.88, 0, g);
+          kotak(0.92, 0.07, 0.12, 0x1f2430, 0, 2.88, 0, isi);
           [-0.46, 0.46].forEach(function (x) {
-            kotak(0.06, 0.5, 0.06, 0x1f2430, x, 2.65, 0, g);
-            const c = silinder(0.2, 0.2, 0.14, 0x1f2430, x, 2.42, 0, g, 12);
+            kotak(0.06, 0.5, 0.06, 0x1f2430, x, 2.65, 0, isi);
+            const c = silinder(0.2, 0.2, 0.14, 0x1f2430, x, 2.42, 0, isi, 12);
             c.rotation.z = Math.PI / 2;
           });
         }
-        if (o.badge) {
-          kotak(0.22, 0.3, 0.03, 0xffffff, 0.22, 1.55, 0.265, g);
-          kotak(0.22, 0.07, 0.035, o.badge, 0.22, 1.67, 0.267, g);
+        if (o.kacamata) {
+          [-0.14, 0.14].forEach(function (x) {
+            kotak(0.26, 0.03, 0.03, 0x111827, x, 2.51, 0.41, isi);
+            kotak(0.26, 0.03, 0.03, 0x111827, x, 2.33, 0.41, isi);
+            kotak(0.03, 0.2, 0.03, 0x111827, x - 0.13, 2.42, 0.41, isi);
+            kotak(0.03, 0.2, 0.03, 0x111827, x + 0.13, 2.42, 0.41, isi);
+          });
+          kotak(0.06, 0.03, 0.03, 0x111827, 0, 2.44, 0.41, isi);
         }
-        return {
+        if (o.jas) {
+          kotak(0.3, 0.7, 0.03, 0xffffff, 0, 1.65, 0.262, isi);
+          kotak(0.16, 0.7, 0.04, 0x16213a, -0.32, 1.6, 0.268, isi);
+          kotak(0.16, 0.7, 0.04, 0x16213a, 0.32, 1.6, 0.268, isi);
+        }
+        if (o.dasi) {
+          kotak(0.12, 0.55, 0.035, o.dasi, 0, 1.58, 0.28, isi);
+          kotak(0.16, 0.12, 0.045, o.dasi, 0, 1.9, 0.28, isi);
+        }
+        if (o.badge) {
+          kotak(0.22, 0.3, 0.03, 0xffffff, 0.22, 1.55, 0.265, isi);
+          kotak(0.22, 0.07, 0.035, o.badge, 0.22, 1.67, 0.267, isi);
+        }
+        const pakaianIbadah = new THREE.Group();
+        pakaianIbadah.visible = false;
+        isi.add(pakaianIbadah);
+        let kainBawah = null;
+        if (o.jenis === 'perempuan') {
+          const putih = 0xf4f1ea;
+          kotak(1.6, 1.6, 0.8, putih, 0, 1.4, 0, pakaianIbadah);
+          const tudung = new THREE.Mesh(new THREE.SphereGeometry(0.5, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), mat(putih));
+          tudung.position.set(0, 2.38, -0.04);
+          tudung.rotation.x = -0.45;
+          tudung.castShadow = true;
+          pakaianIbadah.add(tudung);
+          kotak(0.95, 1.75, 0.2, putih, 0, 1.75, -0.62, pakaianIbadah);
+          kainBawah = silinder(0.5, 0.62, 0.95, putih, 0, 0.48, 0, g, 14);
+          kainBawah.visible = false;
+        } else {
+          silinder(0.33, 0.35, 0.2, 0x111827, 0, 2.9, 0, pakaianIbadah, 14);
+        }
+        const hasil = {
           grup: g,
           kakiKiri: kiri.paha, kakiKanan: kanan.paha,
           betisKiri: kiri.lutut, betisKanan: kanan.lutut,
-          lenganKiri: lKiri, lenganKanan: lKanan
+          lenganKiri: lKiri, lenganKanan: lKanan,
+          badan: badan,
+          berpakaianIbadah: false,
+          pasangIbadah: function (on) {
+            pakaianIbadah.visible = !!on;
+            if (kainBawah) kainBawah.visible = !!on;
+            hasil.berpakaianIbadah = !!on;
+          }
         };
+        return hasil;
       }
 
       const arah = new THREE.Vector3();
@@ -426,16 +720,74 @@
         orang.betisKanan.rotation.x = 0;
         orang.lenganKiri.rotation.x = 0;
         orang.lenganKanan.rotation.x = 0;
+        orang.lenganKiri.rotation.z = 0;
+        orang.lenganKanan.rotation.z = 0;
+        orang.badan.rotation.set(0, 0, 0);
       }
-      function poseDuduk(orang) {
+      function poseDuduk(orang, turun) {
         orang.kakiKiri.rotation.x = -Math.PI / 2;
         orang.kakiKanan.rotation.x = -Math.PI / 2;
         orang.betisKiri.rotation.x = Math.PI / 2;
         orang.betisKanan.rotation.x = Math.PI / 2;
         orang.lenganKiri.rotation.x = -1.0;
         orang.lenganKanan.rotation.x = -1.0;
-        orang.grup.position.y = -0.25;
+        orang.grup.position.y = -(turun === undefined ? 0.25 : turun);
       }
+      /* ---------- Gerakan sholat (animasi sederhana, dua rakaat) ---------- */
+      const POSE_DASAR = { y: 0, bx: 0, by: 0, px: 0, tx: 0, lx: 0, lz: 0 };
+      function pose(o) { return Object.assign({}, POSE_DASAR, o); }
+      const POSE = {
+        berdiri: pose({}),
+        takbir: pose({ lx: -2.3, lz: 0.1 }),
+        qiyam: pose({ lx: -1.25, lz: 0.6 }),
+        ruku: pose({ bx: 1.45, lx: -0.35 }),
+        itidal: pose({}),
+        sujud: pose({ y: -0.2, bx: 1.73, tx: 1.57, lx: -2.89 }),
+        duduk: pose({ y: -0.4, px: -1.09, tx: 2.44, lx: -1.0 }),
+        salamKanan: pose({ y: -0.4, px: -1.09, tx: 2.44, lx: -1.0, by: -0.7 }),
+        salamKiri: pose({ y: -0.4, px: -1.09, tx: 2.44, lx: -1.0, by: 0.7 })
+      };
+      const URUTAN_SHOLAT = [
+        ['takbir', 2.2], ['qiyam', 4], ['ruku', 3], ['itidal', 2], ['sujud', 3], ['duduk', 2], ['sujud', 3],
+        ['qiyam', 4], ['ruku', 3], ['itidal', 2], ['sujud', 3], ['duduk', 2], ['sujud', 3],
+        ['duduk', 6], ['salamKanan', 1.6], ['salamKiri', 1.6], ['duduk', 1.2]
+      ];
+      const DURASI_SHOLAT = URUTAN_SHOLAT.reduce(function (j, u) { return j + u[1]; }, 0) + 1.5;
+      function campurPose(a, b, e) {
+        const r = {};
+        Object.keys(a).forEach(function (k) { r[k] = a[k] + (b[k] - a[k]) * e; });
+        return r;
+      }
+      function poseSholat(t) {
+        let akhir = 0;
+        for (let i = 0; i < URUTAN_SHOLAT.length; i++) {
+          const mulai = akhir;
+          akhir += URUTAN_SHOLAT[i][1];
+          if (t < akhir) {
+            const sebelum = i === 0 ? POSE.berdiri : POSE[URUTAN_SHOLAT[i - 1][0]];
+            const kini = POSE[URUTAN_SHOLAT[i][0]];
+            const u = Math.min(1, (t - mulai) / Math.min(0.9, URUTAN_SHOLAT[i][1] * 0.6));
+            return campurPose(sebelum, kini, u * u * (3 - 2 * u));
+          }
+        }
+        return POSE.berdiri;
+      }
+      function terapkanPose(orang, ps) {
+        orang.grup.position.y = ps.y;
+        orang.badan.rotation.x = ps.bx;
+        orang.badan.rotation.y = ps.by;
+        orang.kakiKiri.rotation.x = ps.px;
+        orang.kakiKanan.rotation.x = ps.px;
+        orang.betisKiri.rotation.x = ps.tx;
+        orang.betisKanan.rotation.x = ps.tx;
+        orang.lenganKiri.rotation.x = ps.lx;
+        orang.lenganKanan.rotation.x = ps.lx;
+        orang.lenganKiri.rotation.z = ps.lz;
+        orang.lenganKanan.rotation.z = -ps.lz;
+      }
+      api.poseSholat = poseSholat;
+      api.durasiSholat = DURASI_SHOLAT;
+
       function patroli(orang, titik, kecepatan) {
         let i = 0;
         let jeda = Math.random() * 2;
@@ -470,15 +822,118 @@
       patroli(orangC, [[-20, 6.2], [-6, 6.2]], 1.5);
 
       /* ---------- OFFICE: dinding dan jendela ---------- */
-      kotak(24, 5.5, 0.4, 0xd3cec2, 15, 2.75, -7.8);
-      kotak(0.4, 5.5, 16, 0xc3beb2, 3.2, 2.75, 0);
-      kotak(4.4, 3, 0.1, 0x8aa0ad, 6.5, 3.3, -7.58);
-      const kaca = new THREE.Mesh(new THREE.PlaneGeometry(4, 2.6), new THREE.MeshBasicMaterial({ color: 0xbfe3f5 }));
-      kaca.position.set(6.5, 3.3, -7.52);
+      kotak(32, 5.5, 0.4, 0xd3cec2, 19, 2.75, -7.8);
+      kotak(10, 5.5, 0.4, 0xd3cec2, 40, 2.75, -7.8);
+      kotak(0.4, 5.5, 10.2, 0xc3beb2, 3.2, 2.75, -2.9);
+      kotak(0.4, 5.5, 10.2, 0xc3beb2, 3.2, 2.75, 10.9);
+      kotak(0.4, 1.5, 3.6, 0xc3beb2, 3.2, 4.75, 4.0);
+      kotak(3.6, 3, 0.1, 0x8aa0ad, 13.0, 3.3, -7.58);
+      const bahanKaca = bahanBercahaya(0xbfe3f5, 0x1b2a4a);
+      const kaca = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 2.6), bahanKaca);
+      kaca.position.set(13.0, 3.3, -7.52);
       scene.add(kaca);
 
-      /* ---------- OFFICE: layar dashboard di dinding ruang meeting ---------- */
-      kotak(7, 3.6, 0.2, 0x1f2a37, 20.8, 3.3, -7.55);
+      // papan catatan warna-warni
+      const canvasNote = bikinCanvas(340, 240);
+      (function () {
+        const ctx = canvasNote.getContext('2d');
+        ctx.fillStyle = '#f4efe3';
+        ctx.fillRect(0, 0, 340, 240);
+        const warna = ['#ffd479', '#f2845c', '#7ee2b8', '#79b8ff', '#f4a6c8'];
+        for (let i = 0; i < 5; i++) {
+          for (let j = 0; j < 4; j++) {
+            ctx.fillStyle = warna[(i * 3 + j * 2) % 5];
+            ctx.fillRect(14 + i * 64, 14 + j * 56, 52, 46);
+          }
+        }
+      })();
+      const texNote = new THREE.CanvasTexture(canvasNote);
+      texNote.colorSpace = THREE.SRGBColorSpace;
+      kotak(3.7, 2.7, 0.1, 0x8f6740, 17.6, 3.0, -7.58);
+      const papanNote = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.4), new THREE.MeshBasicMaterial({ map: texNote }));
+      papanNote.position.set(17.6, 3.0, -7.52);
+      scene.add(papanNote);
+
+      // TV ruang meeting (belum interaktif)
+      kotak(5.4, 3.1, 0.15, 0x111827, 23.4, 3.2, -7.55);
+      const canvasTv = bikinCanvas(540, 300);
+      (function () {
+        const ctx = canvasTv.getContext('2d');
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, 540, 300);
+        ctx.fillStyle = '#e8613a';
+        bulatRect(ctx, 220, 100, 100, 70, 16);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(257, 120);
+        ctx.lineTo(257, 150);
+        ctx.lineTo(284, 135);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#8fa08b';
+        ctx.font = '26px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('TV ruang meeting', 270, 230);
+        ctx.textAlign = 'left';
+      })();
+      const texTv = new THREE.CanvasTexture(canvasTv);
+      texTv.colorSpace = THREE.SRGBColorSpace;
+      const layarTv = new THREE.Mesh(new THREE.PlaneGeometry(5.0, 2.7), new THREE.MeshBasicMaterial({ map: texTv }));
+      layarTv.position.set(23.4, 3.2, -7.45);
+      scene.add(layarTv);
+      info.tv = layarTv;
+
+      // latar foto studio konten
+      const canvasLatar = bikinCanvas(640, 360);
+      (function () {
+        const ctx = canvasLatar.getContext('2d');
+        ctx.fillStyle = '#2f7a4a';
+        ctx.fillRect(0, 0, 640, 360);
+        ctx.fillStyle = '#3f9a5e';
+        for (let i = 0; i < 8; i++) {
+          ctx.beginPath();
+          ctx.ellipse(40 + i * 80, 60 + (i % 2) * 120, 38, 62, 0.4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.fillStyle = '#eaf7e4';
+        ctx.font = 'italic 700 96px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('cocotani', 320, 220);
+        ctx.font = '500 30px system-ui, sans-serif';
+        ctx.fillText('HYDROPONIC FARMING', 320, 270);
+        ctx.textAlign = 'left';
+      })();
+      const texLatar = new THREE.CanvasTexture(canvasLatar);
+      texLatar.colorSpace = THREE.SRGBColorSpace;
+      const latarFoto = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.6), new THREE.MeshBasicMaterial({ map: texLatar }));
+      latarFoto.position.set(31.2, 2.4, -7.55);
+      scene.add(latarFoto);
+
+      // dinding hijau hidroponik di belakang command center
+      const canvasHijau = bikinCanvas(800, 420);
+      (function () {
+        const ctx = canvasHijau.getContext('2d');
+        ctx.fillStyle = '#21402a';
+        ctx.fillRect(0, 0, 800, 420);
+        const hijau = ['#4f9d4a', '#5fb54a', '#6cc04a', '#8fd66b', '#3f8f2a'];
+        for (let i = 0; i < 520; i++) {
+          ctx.fillStyle = hijau[i % 5];
+          ctx.beginPath();
+          ctx.arc(10 + (i * 37) % 780, 10 + ((i * 53) % 400), 12 + (i % 4) * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      })();
+      const texHijau = new THREE.CanvasTexture(canvasHijau);
+      texHijau.colorSpace = THREE.SRGBColorSpace;
+      kotak(0.12, 4.5, 8.4, 0x6b4f35, 3.46, 2.9, -2.9);
+      const dindingHijau = new THREE.Mesh(new THREE.PlaneGeometry(8.0, 4.2), new THREE.MeshBasicMaterial({ map: texHijau }));
+      dindingHijau.rotation.y = Math.PI / 2;
+      dindingHijau.position.set(3.53, 2.9, -2.9);
+      scene.add(dindingHijau);
+
+      /* ---------- OFFICE: layar dashboard di dinding command center ---------- */
+      kotak(7, 3.6, 0.2, 0x1f2a37, 7.4, 3.3, -7.55);
       const canvasLayar = bikinCanvas(512, 256);
       (function () {
         const ctx = canvasLayar.getContext('2d');
@@ -503,7 +958,7 @@
       const texLayar = new THREE.CanvasTexture(canvasLayar);
       texLayar.colorSpace = THREE.SRGBColorSpace;
       const layar = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 3.2), new THREE.MeshBasicMaterial({ map: texLayar }));
-      layar.position.set(20.8, 3.3, -7.43);
+      layar.position.set(7.4, 3.3, -7.43);
       scene.add(layar);
       klikTarget.push(layar);
 
@@ -567,7 +1022,7 @@
       texLogo.anisotropy = 8;
       const papanLogo = new THREE.Mesh(new THREE.PlaneGeometry(8, 3), new THREE.MeshBasicMaterial({ map: texLogo }));
       papanLogo.rotation.y = Math.PI / 2;
-      papanLogo.position.set(3.42, 3.9, 0);
+      papanLogo.position.set(3.42, 3.8, 10.5);
       scene.add(papanLogo);
       api.setLogoGambar = function (img) {
         gambarLogo(img);
@@ -580,19 +1035,41 @@
         texLogo.needsUpdate = true;
       };
 
+
+      const glowLogo = new THREE.Mesh(
+        new THREE.PlaneGeometry(9.4, 4.0),
+        new THREE.MeshBasicMaterial({ color: 0x86c440, transparent: true, opacity: 0.28, depthWrite: false })
+      );
+      glowLogo.rotation.y = Math.PI / 2;
+      glowLogo.position.set(3.41, 3.8, 10.5);
+      scene.add(glowLogo);
+      let neonMenyala = true;
+      api.setNeon = function (on) {
+        neonMenyala = !!on;
+        glowLogo.visible = neonMenyala;
+        papanLogo.material.color.setHex(neonMenyala ? 0xffffff : 0x6b6b6b);
+      };
+      const malamAsli = api.setMalam;
+      api.setMalam = function (on) {
+        malamAsli(on);
+        glowLogo.material.opacity = on ? 0.5 : 0.28;
+      };
+      api.setNeon(true);
+
+
       /* ---------- OFFICE: lantai zona ---------- */
       const rintangan = [];
       function rint(x1, x2, z1, z2, jenis) {
         rintangan.push({ x1: x1, x2: x2, z1: z1, z2: z2, jenis: jenis });
       }
-      function zonaLantai(x1, x2, z1, z2, warna, teks, tx, tz) {
+      function zonaLantai(x1, x2, z1, z2, warna, teks, tx, tz, tinggi) {
         const pxm = 40;
         const c = bikinCanvas(Math.round((x2 - x1) * pxm), Math.round((z2 - z1) * pxm));
         const ctx = c.getContext('2d');
         ctx.fillStyle = warna;
         ctx.fillRect(0, 0, c.width, c.height);
-        ctx.fillStyle = 'rgba(40, 35, 20, 0.26)';
-        ctx.font = '700 50px system-ui, sans-serif';
+        ctx.fillStyle = 'rgba(40, 35, 20, 0.24)';
+        ctx.font = '700 46px system-ui, sans-serif';
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'left';
         ctx.fillText(teks, (tx - x1) * pxm, (tz - z1) * pxm);
@@ -601,13 +1078,21 @@
         tex.anisotropy = 4;
         const m = new THREE.Mesh(new THREE.PlaneGeometry(x2 - x1, z2 - z1), new THREE.MeshLambertMaterial({ map: tex }));
         m.rotation.x = -Math.PI / 2;
-        m.position.set((x1 + x2) / 2, 0.012, (z1 + z2) / 2);
+        m.position.set((x1 + x2) / 2, tinggi || 0.012, (z1 + z2) / 2);
         m.receiveShadow = true;
         scene.add(m);
       }
-      zonaLantai(3.4, 14.5, -7.6, 8, '#e6dfcf', 'Area kerja', 7.4, 6.9);
-      zonaLantai(14.7, 27, -8, -0.5, '#d9ccae', 'Ruang meeting', 15.4, -7.3);
-      zonaLantai(14.7, 27, -0.3, 8, '#c5d2c0', 'Ruang game', 17.4, 7.2);
+      zonaLantai(3.4, 11.4, -7.6, 2, '#e3d3b4', 'Command center', 4.2, 1.3);
+      zonaLantai(11.4, 19.4, -7.6, 2, '#ead9b5', 'Area kerja', 12.0, 1.3);
+      zonaLantai(19.4, 27.4, -7.6, 2, '#d3e3d4', 'Ruang meeting', 20.0, 1.3);
+      zonaLantai(27.4, 35, -7.6, 2, '#efd6c6', 'Studio konten', 28.0, 1.3);
+      zonaLantai(3.4, 35, 2, 6, '#d9d9cf', 'Jalan tengah', 13.0, 4.0);
+      zonaLantai(3.4, 11.4, 6, 16, '#e6cfa8', 'Lobi', 4.2, 15.3);
+      zonaLantai(11.4, 19.4, 6, 16, '#f0e0bd', 'Pantry kafe', 12.0, 15.3);
+      zonaLantai(19.4, 27.4, 6, 16, '#f1cdb5', 'Tribun santai', 20.0, 10.6);
+      zonaLantai(27.4, 35, 6, 16, '#c3d3e6', 'Ruang game', 28.0, 15.3);
+      zonaLantai(35, 45, -7.6, 2, '#d8c4a0', 'Ruang owner', 36.0, 1.3);
+      zonaLantai(35, 45, 2, 6, '#d9d9cf', ' ', 36.0, 4.0);
 
       /* ---------- OFFICE: perabot ---------- */
       function kursi(x, z, fx, fz, warna) {
@@ -621,19 +1106,20 @@
         scene.add(g);
         rint(x - 0.45, x + 0.45, z - 0.45, z + 0.45, 'kursi');
       }
-      function mejaKerja(x, z, warnaLayar) {
-        kotak(2.4, 0.12, 1.4, 0xb98a5a, x, 1.1, z);
-        kotak(0.12, 1.04, 1.3, 0x8f6740, x - 1.1, 0.52, z);
-        kotak(0.12, 1.04, 1.3, 0x8f6740, x + 1.1, 0.52, z);
-        kotak(2.2, 0.7, 0.08, 0x8f6740, x, 0.75, z - 0.6);
+      function mejaKerja(x, z, warnaLayar, lebar, warnaMeja) {
+        const w = lebar || 2.4;
+        kotak(w, 0.12, 1.4, warnaMeja || 0xb98a5a, x, 1.1, z);
+        kotak(0.12, 1.04, 1.3, 0x8f6740, x - (w / 2 - 0.1), 0.52, z);
+        kotak(0.12, 1.04, 1.3, 0x8f6740, x + (w / 2 - 0.1), 0.52, z);
+        kotak(w - 0.2, 0.7, 0.08, 0x8f6740, x, 0.75, z - 0.6);
         kotak(0.16, 0.3, 0.16, 0x3d4a5c, x, 1.31, z - 0.25);
         kotak(1.1, 0.68, 0.07, 0x1f2430, x, 1.85, z - 0.25);
         const layarMeja = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.58), new THREE.MeshBasicMaterial({ color: warnaLayar }));
         layarMeja.position.set(x, 1.85, z - 0.25 + 0.04);
         scene.add(layarMeja);
         kotak(0.7, 0.04, 0.24, 0x2d3748, x, 1.18, z + 0.3);
-        silinder(0.09, 0.09, 0.14, 0xe8613a, x + 0.8, 1.23, z + 0.2, null, 10);
-        rint(x - 1.2, x + 1.2, z - 0.7, z + 0.7, 'meja');
+        silinder(0.09, 0.09, 0.14, 0xe8613a, x + w / 2 - 0.4, 1.23, z + 0.2, null, 10);
+        rint(x - w / 2, x + w / 2, z - 0.7, z + 0.7, 'meja');
       }
       function tanamanHias(x, z) {
         silinder(0.45, 0.35, 0.5, 0xb0654a, x, 0.25, z, null, 12);
@@ -642,61 +1128,24 @@
         bola(0.5, 0x5fb356, x + 0.5, 0.9, z + 0.3);
         rint(x - 0.8, x + 0.8, z - 0.8, z + 0.8, 'tanaman');
       }
-      function sekatKaca(x1, z1, x2, z2) {
+      function sekatKaca(x1, z1, x2, z2, opasitas) {
         const tinggi = 3.2;
         const horizontal = Math.abs(z2 - z1) < 1e-6;
         const panjang = horizontal ? Math.abs(x2 - x1) : Math.abs(z2 - z1);
         const cx = (x1 + x2) / 2;
         const cz = (z1 + z2) / 2;
-        const kacaSekat = new THREE.Mesh(
+        const bidang = new THREE.Mesh(
           new THREE.BoxGeometry(horizontal ? panjang : 0.1, tinggi, horizontal ? 0.1 : panjang),
-          new THREE.MeshLambertMaterial({ color: 0xbfe3f5, transparent: true, opacity: 0.16, depthWrite: false })
+          new THREE.MeshLambertMaterial({ color: 0xbfe3f5, transparent: true, opacity: opasitas || 0.16, depthWrite: false })
         );
-        kacaSekat.position.set(cx, tinggi / 2, cz);
-        scene.add(kacaSekat);
+        bidang.position.set(cx, tinggi / 2, cz);
+        scene.add(bidang);
         kotak(horizontal ? panjang : 0.16, 0.12, horizontal ? 0.16 : panjang, 0x6b7280, cx, tinggi, cz);
         kotak(horizontal ? panjang : 0.16, 0.1, horizontal ? 0.16 : panjang, 0x6b7280, cx, 0.05, cz);
         kotak(0.18, tinggi, 0.18, 0x6b7280, x1, tinggi / 2, z1);
         kotak(0.18, tinggi, 0.18, 0x6b7280, x2, tinggi / 2, z2);
         rint(Math.min(x1, x2) - 0.1, Math.max(x1, x2) + 0.1, Math.min(z1, z2) - 0.1, Math.max(z1, z2) + 0.1, 'kaca');
       }
-
-      // Area kerja: dua baris meja menghadap utara, kursi di sisi selatan tiap meja
-      const warnaLayarMeja = [0x79b8ff, 0x7ee2b8, 0xffd479];
-      [6.0, 9.0, 12.0].forEach(function (x, i) {
-        mejaKerja(x, -5.2, warnaLayarMeja[i % 3]);
-        mejaKerja(x, -0.2, warnaLayarMeja[(i + 1) % 3]);
-        kursi(x, -3.9, 0, -1, 0x4b5563);
-        kursi(x, 1.1, 0, -1, 0x4b5563);
-      });
-      tanamanHias(4.6, 6.4);
-      tanamanHias(26.2, -6.8);
-
-      // Ruang meeting: sekat kaca dengan pintu di sisi barat, meja panjang, enam kursi
-      sekatKaca(14.6, -8, 14.6, -4.2);
-      sekatKaca(14.6, -1.8, 14.6, 2.2);
-      sekatKaca(14.6, 5.4, 14.6, 8);
-      sekatKaca(14.6, -0.4, 27, -0.4);
-      kotak(5.0, 0.18, 2.2, 0xc79a68, 20.8, 1.2, -4.3);
-      kotak(0.4, 1.1, 1.6, 0x8f6740, 19.2, 0.55, -4.3);
-      kotak(0.4, 1.1, 1.6, 0x8f6740, 22.4, 0.55, -4.3);
-      kotak(0.7, 0.04, 0.5, 0x9ca3af, 19.4, 1.31, -3.8);
-      kotak(0.7, 0.04, 0.5, 0x9ca3af, 22.2, 1.31, -3.8);
-      kotak(0.5, 0.02, 0.7, 0xffffff, 20.8, 1.3, -4.6);
-      rint(18.3, 23.3, -5.4, -3.2, 'meja');
-      [19.0, 20.8, 22.6].forEach(function (x) {
-        kursi(x, -2.4, 0, -1, 0x2f6f9f);
-        kursi(x, -6.2, 0, 1, 0x2f6f9f);
-      });
-
-      // Ruang game: meja biliar, dua mesin arkade, sofa dengan meja kopi, bean bag
-      kotak(4.0, 0.9, 2.2, 0x5b3a29, 20.0, 0.45, 4.6);
-      kotak(3.6, 0.1, 1.8, 0x2e8b57, 20.0, 0.93, 4.6);
-      bola(0.14, 0xffffff, 21.0, 1.1, 4.6);
-      bola(0.14, 0xc0392b, 19.2, 1.1, 4.3);
-      bola(0.14, 0xf1c40f, 19.5, 1.1, 4.9);
-      bola(0.14, 0x2563eb, 19.0, 1.1, 4.7);
-      rint(18.0, 22.0, 3.5, 5.7, 'meja');
       function arkade(x, z, warna, warnaLayar) {
         kotak(1.2, 2.6, 0.9, warna, x, 1.3, z);
         kotak(1.2, 0.4, 1.0, 0xf59e0b, x, 2.75, z);
@@ -706,66 +1155,405 @@
         kotak(1.0, 0.12, 0.4, 0x1f2430, x, 1.25, z + 0.6);
         rint(x - 0.6, x + 0.6, z - 0.45, z + 0.65, 'mesin');
       }
-      arkade(17.0, 0.6, 0x2b3a67, 0x7ee2b8);
-      arkade(18.8, 0.6, 0x7a2e4d, 0xffd479);
-      kotak(1.4, 0.6, 3.2, 0x7c5b8a, 25.2, 0.3, 5.0);
-      kotak(0.4, 1.3, 3.2, 0x6a4a78, 25.75, 0.85, 5.0);
-      kotak(1.4, 0.9, 0.3, 0x6a4a78, 25.2, 0.45, 6.5);
-      kotak(1.0, 0.12, 2.6, 0x8d6c9b, 24.95, 0.66, 5.0);
-      rint(24.5, 25.95, 3.35, 6.65, 'sofa');
-      kotak(1.2, 0.5, 1.6, 0xb98a5a, 23.2, 0.25, 5.0);
-      silinder(0.1, 0.1, 0.15, 0xffffff, 23.2, 0.58, 4.7, null, 10);
-      rint(22.6, 23.8, 4.2, 5.8, 'meja');
-      const beanbag = bola(0.8, 0xe8613a, 15.6, 0.4, 7.0);
-      beanbag.scale.set(1, 0.55, 1);
-      rint(14.8, 16.4, 6.2, 7.8, 'beanbag');
+      function beanbag(x, z, warna, r) {
+        const b = bola(r, warna, x, r * 0.55, z);
+        b.scale.set(1, 0.6, 1);
+        rint(x - r, x + r, z - r, z + r, 'kursi');
+      }
+      function planterKoridor(x) {
+        kotak(2.4, 0.9, 0.9, 0xa87b4f, x, 0.45, 4.0);
+        kotak(2.2, 0.05, 0.7, 0x4a3626, x, 0.92, 4.0);
+        [-0.8, -0.4, 0, 0.4, 0.8].forEach(function (d, i) {
+          const s = bola(0.22, [0x5fb54a, 0x6cc04a, 0x4f9d4a][i % 3], x + d, 1.18, 4.0);
+          s.scale.set(1, 0.85, 1);
+        });
+        rint(x - 1.2, x + 1.2, 3.55, 4.45, 'tanaman');
+      }
+
+      // Command center: tiga meja agent menghadap dinding hijau dan layar dashboard
+      [4.6, 7.1, 9.6].forEach(function (x, i) {
+        mejaKerja(x, -3.4, [0x79b8ff, 0x7ee2b8, 0xffd479][i], 2.2, 0xd9b98a);
+        kursi(x, -2.1, 0, -1, [0x2f9e8f, 0x3b82c4, 0x7c6bd6][i]);
+      });
+      [5.8, 8.6].forEach(function (x) { lampuHias(x, 4.3, -3.4, 0.28, 2.4); });
+
+      // Area kerja: empat meja warna-warni dalam dua baris
+      [[13.4, -5.6, 0xf2845c], [17.0, -5.6, 0x3fb8a6], [13.4, -1.4, 0xf6c453], [17.0, -1.4, 0x5aa0e6]].forEach(function (d, i) {
+        mejaKerja(d[0], d[1], [0x79b8ff, 0x7ee2b8, 0xffd479, 0xf4a6c8][i], 2.4, d[2]);
+        kursi(d[0], d[1] + 1.3, 0, -1, 0x4b5563);
+      });
+      [13.4, 17.0].forEach(function (x) { lampuHias(x, 4.4, -3.2, 0.3, 2.2); });
+
+      // Ruang meeting: sekat kaca dengan pintu di sisi selatan, meja panjang, enam kursi
+      sekatKaca(19.4, 2.0, 22.4, 2.0);
+      sekatKaca(24.4, 2.0, 27.4, 2.0);
+      sekatKaca(19.4, -7.6, 19.4, 2.0);
+      sekatKaca(27.4, -7.6, 27.4, 2.0);
+      kotak(5.0, 0.18, 2.2, 0xc79a68, 23.4, 1.2, -3.6);
+      kotak(0.4, 1.1, 1.6, 0x8f6740, 21.8, 0.55, -3.6);
+      kotak(0.4, 1.1, 1.6, 0x8f6740, 25.0, 0.55, -3.6);
+      kotak(0.7, 0.04, 0.5, 0x9ca3af, 22.0, 1.31, -3.2);
+      kotak(0.7, 0.04, 0.5, 0x9ca3af, 24.8, 1.31, -3.2);
+      rint(20.9, 25.9, -4.7, -2.5, 'meja');
+      [21.6, 23.4, 25.2].forEach(function (x) {
+        kursi(x, -1.7, 0, -1, 0x2f6f9f);
+        kursi(x, -5.5, 0, 1, 0x2f6f9f);
+      });
+      lampuHias(23.4, 4.3, -3.6, 0.35, 2.2);
+
+      // Studio konten: ring light, kamera, meja podcast, sofa latar
+      sekatKaca(30.2, 2.0, 27.4, 2.0);
+      sekatKaca(32.2, 2.0, 35, 2.0);
+      silinder(0.04, 0.04, 2.6, 0x3d4a5c, 29.0, 1.3, -4.2, null, 8);
+      const cincin = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.07, 10, 28), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+      cincin.position.set(29.0, 2.9, -4.2);
+      scene.add(cincin);
+      rint(28.6, 29.4, -4.6, -3.8, 'alat');
+      silinder(0.04, 0.04, 1.6, 0x3d4a5c, 29.0, 0.8, -1.8, null, 8);
+      kotak(0.5, 0.4, 0.6, 0x1f2430, 29.0, 1.8, -1.8);
+      const lensa = silinder(0.14, 0.14, 0.3, 0x111827, 29.0, 1.8, -2.2, null, 12);
+      lensa.rotation.x = Math.PI / 2;
+      rint(28.6, 29.4, -2.2, -1.4, 'alat');
+      silinder(1.0, 1.0, 0.1, 0xc79a68, 32.6, 1.1, -3.2, null, 24);
+      silinder(0.15, 0.15, 1.05, 0x8f6740, 32.6, 0.55, -3.2, null, 10);
+      [-0.4, 0.4].forEach(function (d) {
+        silinder(0.03, 0.03, 0.5, 0x1f2430, 32.6 + d, 1.4, -3.2, null, 8);
+        bola(0.07, 0x1f2430, 32.6 + d, 1.68, -3.2);
+      });
+      rint(31.6, 33.6, -4.2, -2.2, 'meja');
+      kursi(31.9, -1.5, 0, -1, 0xf2845c);
+      kursi(33.3, -1.5, 0, -1, 0x3fb8a6);
+      kotak(2.6, 0.6, 1.0, 0x7c5b8a, 31.2, 0.3, -6.5);
+      kotak(2.6, 1.0, 0.3, 0x6a4a78, 31.2, 0.8, -6.95);
+      rint(29.9, 32.5, -7.1, -6.0, 'sofa');
+      lampuHias(31.2, 4.3, -3.8, 0.3, 2.2);
+
+      // Ruang owner: kantor eksekutif, meja owner, meja operasional (cash flow), sofa
+      sekatKaca(35, -7.6, 35, 2.0);
+      sekatKaca(45, -7.6, 45, 2.0);
+      sekatKaca(35, 2.0, 39.4, 2.0);
+      sekatKaca(41.4, 2.0, 45, 2.0);
+      mejaKerja(38.2, -4.4, 0x79b8ff, 3.6, 0x4a3626);
+      kursi(38.2, -2.9, 0, -1, 0x2d3748);
+      mejaKerja(42.6, -4.4, 0xffd479, 2.6, 0xd9b98a);
+      kursi(42.6, -2.9, 0, -1, 0xf2845c);
+      kotak(1.1, 0.6, 3.0, 0x3d4a5c, 36.4, 0.3, 0.2);
+      kotak(0.35, 1.2, 3.0, 0x2d3748, 35.95, 0.8, 0.2);
+      rint(35.75, 37.0, -1.35, 1.75, 'sofa');
+      kotak(0.9, 0.4, 1.4, 0x8f6740, 37.9, 0.2, 0.4);
+      rint(37.4, 38.4, -0.3, 1.1, 'meja');
+      kotak(1.2, 2.6, 0.5, 0x6b4f35, 36.3, 1.3, -7.2);
+      [0xe8613a, 0x3fb8a6, 0xf6c453, 0x7c6bd6].forEach(function (w, i) {
+        kotak(0.18, 0.5, 0.3, w, 35.9 + i * 0.27, 2.0, -7.0);
+        kotak(0.18, 0.5, 0.3, w, 35.9 + i * 0.27, 0.9, -7.0);
+      });
+      rint(35.7, 36.9, -7.45, -6.95, 'rak');
+      // logo di dinding utara (memakai gambar yang sama dengan logo di lobi)
+      kotak(6.0, 2.5, 0.1, 0x000000, 38.2, 3.6, -7.58);
+      const logoOwner = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 2.1), new THREE.MeshBasicMaterial({ map: texLogo }));
+      logoOwner.position.set(38.2, 3.6, -7.52);
+      scene.add(logoOwner);
+      // layar cash flow di atas meja operasional (tampilan hiasan, bukan data)
+      const canvasKas = bikinCanvas(480, 300);
+      (function () {
+        const ctx = canvasKas.getContext('2d');
+        ctx.fillStyle = '#1f2a37';
+        ctx.fillRect(0, 0, 480, 300);
+        ctx.fillStyle = '#e6eee3';
+        ctx.font = '600 34px system-ui, sans-serif';
+        ctx.fillText('Cash flow', 28, 56);
+        ctx.font = '22px system-ui, sans-serif';
+        ctx.fillStyle = '#8fa08b';
+        ctx.fillText('Tampilan contoh', 28, 270);
+        [[80, '#5ec27a'], [50, '#e8613a'], [120, '#5ec27a'], [70, '#e8613a'], [140, '#5ec27a'], [100, '#5ec27a']].forEach(function (b, i) {
+          ctx.fillStyle = b[1];
+          ctx.fillRect(40 + i * 68, 235 - b[0], 44, b[0]);
+        });
+      })();
+      const texKas = new THREE.CanvasTexture(canvasKas);
+      texKas.colorSpace = THREE.SRGBColorSpace;
+      kotak(3.6, 2.3, 0.1, 0x1f2a37, 42.6, 3.5, -7.58);
+      const layarKas = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 2.1), new THREE.MeshBasicMaterial({ map: texKas }));
+      layarKas.position.set(42.6, 3.5, -7.52);
+      scene.add(layarKas);
+      [38.2, 42.6].forEach(function (x) { lampuHias(x, 4.4, -3.8, 0.3, 2.2); });
+      tanamanHias(44.2, -6.4);
+      tanamanHias(44.2, 0.6);
+
+      // Musholla: dinding kiblat di sisi barat, karpet hijau, tempat wudhu, lima sajadah menghadap kiblat
+      const KIBLAT = [-0.906, -0.423]; // arah kiblat dari Makassar (sekitar 295 derajat dari utara; utara = -z)
+      const URUT_MAT = ['pengingat', 'riset', 'owner', 'cuaca', 'operasional'];
+      const TENGAH_SAF = [39.0, 11.5];
+      const JARAK_MAT = 1.3;
+      const SEJAJAR_SAF = [0.423, -0.906];
+      zonaLantai(35.3, 45, 6.3, 16, '#2f5f48', ' ', 36.0, 15.0);
+      zonaLantai(35.3, 39.2, 6.3, 8.8, '#c9dde6', ' ', 36.0, 7.0, 0.02);
+      kotak(0.3, 5.0, 10, 0xe9e2d0, 35.15, 2.5, 11);
+      rint(35.0, 35.3, 6, 16, 'dinding');
+      kotak(4.1, 4.5, 0.3, 0xe9e2d0, 37.35, 2.25, 6.15);
+      kotak(3.6, 4.5, 0.3, 0xe9e2d0, 43.2, 2.25, 6.15);
+      kotak(2.0, 0.8, 0.3, 0xe9e2d0, 40.4, 4.1, 6.15);
+      rint(35.3, 39.4, 6.0, 6.3, 'dinding');
+      rint(41.4, 45.0, 6.0, 6.3, 'dinding');
+      sekatKaca(35.3, 16, 45, 16, 0.3);
+      sekatKaca(45, 6.3, 45, 16, 0.3);
+
+      // mihrab di dinding kiblat (pola geometris tanpa tulisan)
+      const canvasMihrab = bikinCanvas(260, 400);
+      (function () {
+        const ctx = canvasMihrab.getContext('2d');
+        ctx.fillStyle = '#d8c68f';
+        ctx.fillRect(0, 0, 260, 400);
+        ctx.fillStyle = '#1f5a43';
+        ctx.beginPath();
+        ctx.moveTo(30, 400);
+        ctx.lineTo(30, 150);
+        ctx.quadraticCurveTo(30, 20, 130, 20);
+        ctx.quadraticCurveTo(230, 20, 230, 150);
+        ctx.lineTo(230, 400);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#e8d9a4';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.strokeStyle = '#3f8a69';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+          ctx.beginPath();
+          ctx.arc(130, 230, 28 + i * 18, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      })();
+      const texMihrab = new THREE.CanvasTexture(canvasMihrab);
+      texMihrab.colorSpace = THREE.SRGBColorSpace;
+      const mihrab = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 4.0), new THREE.MeshBasicMaterial({ map: texMihrab }));
+      mihrab.rotation.y = Math.PI / 2;
+      mihrab.position.set(35.32, 2.3, 8.8);
+      scene.add(mihrab);
+      const canvasPapan = bikinCanvas(200, 64);
+      (function () {
+        const ctx = canvasPapan.getContext('2d');
+        ctx.fillStyle = '#1f2430';
+        bulatRect(ctx, 2, 2, 196, 60, 12);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 30px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillText('Kiblat', 100, 33);
+      })();
+      const texPapan = new THREE.CanvasTexture(canvasPapan);
+      texPapan.colorSpace = THREE.SRGBColorSpace;
+      const papanKiblat = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.48), new THREE.MeshBasicMaterial({ map: texPapan, transparent: true }));
+      papanKiblat.rotation.y = Math.PI / 2;
+      papanKiblat.position.set(35.32, 4.6, 8.8);
+      scene.add(papanKiblat);
+
+      // tempat wudhu: bak panjang dengan dua keran
+      kotak(3.0, 0.45, 0.5, 0xcfd8dc, 37.3, 0.225, 6.6);
+      kotak(3.0, 0.08, 0.4, 0x7fb6d5, 37.3, 0.46, 6.6);
+      [36.6, 38.2].forEach(function (x) {
+        silinder(0.04, 0.04, 0.45, 0x9ca3af, x, 0.8, 6.45, null, 8);
+        kotak(0.08, 0.05, 0.25, 0x9ca3af, x, 1.0, 6.58);
+      });
+      rint(35.8, 38.8, 6.35, 6.85, 'bak');
+
+      // lemari mukena dan rak Al-Quran
+      kotak(1.6, 2.4, 0.5, 0x8d6c4a, 42.8, 1.2, 6.7);
+      rint(42.0, 43.6, 6.4, 6.95, 'lemari');
+      kotak(1.0, 1.8, 0.5, 0x6b4f35, 44.4, 0.9, 6.7);
+      [0x2f6f9f, 0x7a2e4d, 0x2e6a5a, 0xd8b45a].forEach(function (w, i) {
+        kotak(0.18, 0.4, 0.3, w, 44.1 + i * 0.22, 1.5, 6.7);
+        kotak(0.18, 0.4, 0.3, w, 44.1 + i * 0.22, 0.7, 6.7);
+      });
+      rint(43.9, 44.9, 6.4, 6.95, 'lemari');
+
+      // lima sajadah sejajar saf, menghadap kiblat
+      const sudutMat = Math.atan2(KIBLAT[0], KIBLAT[1]);
+      const warnaMat = [0x8b2e3a, 0x1f6f78, 0x6b4a9a, 0xb07a1f, 0x2d6a4f];
+      URUT_MAT.forEach(function (id, i) {
+        const o = i - 2;
+        const mx = TENGAH_SAF[0] + o * JARAK_MAT * SEJAJAR_SAF[0];
+        const mz = TENGAH_SAF[1] + o * JARAK_MAT * SEJAJAR_SAF[1];
+        const cm = bikinCanvas(90, 160);
+        const cx = cm.getContext('2d');
+        cx.fillStyle = '#' + ('000000' + warnaMat[i].toString(16)).slice(-6);
+        cx.fillRect(0, 0, 90, 160);
+        cx.strokeStyle = '#f1e6c4';
+        cx.lineWidth = 4;
+        cx.strokeRect(6, 6, 78, 148);
+        cx.fillStyle = '#f1e6c4';
+        cx.beginPath();
+        cx.moveTo(45, 50);
+        cx.lineTo(62, 80);
+        cx.lineTo(45, 110);
+        cx.lineTo(28, 80);
+        cx.closePath();
+        cx.fill();
+        const tm = new THREE.CanvasTexture(cm);
+        tm.colorSpace = THREE.SRGBColorSpace;
+        const sisi = mat(warnaMat[i]);
+        const atas = new THREE.MeshLambertMaterial({ map: tm });
+        const alas = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.03, 1.6), [sisi, sisi, atas, sisi, sisi, sisi]);
+        alas.position.set(mx, 0.035, mz);
+        alas.rotation.y = sudutMat;
+        alas.receiveShadow = true;
+        scene.add(alas);
+      });
+      [[38.0, 3.8, 9.0], [41.2, 3.8, 13.0], [38.0, 3.8, 13.8]].forEach(function (p) { lampuHias(p[0], p[1], p[2], 0.3, 2.4); });
+      tanamanHias(44.2, 14.8);
+
+      // Jalan tengah: planter selada
+      [8.0, 16.0, 24.0, 32.0].forEach(planterKoridor);
+
+      // Lobi: sofa tunggu, meja kopi, meja resepsi, tanaman
+      kotak(1.7, 0.6, 3.2, 0x2f9e8f, 4.4, 0.3, 10.2);
+      kotak(0.4, 1.3, 3.2, 0x257a6e, 3.8, 0.85, 10.2);
+      rint(3.55, 5.25, 8.6, 11.8, 'sofa');
+      kotak(1.0, 0.5, 1.6, 0xb98a5a, 6.4, 0.25, 11.0);
+      rint(5.9, 6.9, 10.2, 11.8, 'meja');
+      kotak(4.2, 1.3, 0.9, 0x8f6740, 8.4, 0.65, 14.4);
+      kotak(4.2, 0.1, 1.0, 0xe8d9b9, 8.4, 1.33, 14.4);
+      kotak(0.9, 1.3, 2.4, 0x8f6740, 10.5, 0.65, 13.2);
+      rint(6.3, 10.95, 12.0, 14.9, 'meja');
+      tanamanHias(4.6, 6.9);
+      tanamanHias(5.0, 15.2);
+
+      // Pantry kafe: bar kopi, salad bar, bangku, meja bistro
+      kotak(4.8, 1.3, 1.0, 0x8f6740, 15.4, 0.65, 8.5);
+      kotak(4.8, 0.1, 1.1, 0xe8d9b9, 15.4, 1.33, 8.5);
+      kotak(0.7, 0.5, 0.5, 0x3d4a5c, 13.6, 1.62, 8.5);
+      const kacaSalad = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.55, 0.8),
+        new THREE.MeshLambertMaterial({ color: 0xbfe3f5, transparent: true, opacity: 0.35, depthWrite: false })
+      );
+      kacaSalad.position.set(17.0, 1.65, 8.5);
+      scene.add(kacaSalad);
+      [-0.7, -0.35, 0, 0.35, 0.7].forEach(function (d, i) {
+        bola(0.17, [0x6cc04a, 0x5fb54a, 0xc0392b, 0x8fd66b, 0xf1c40f][i], 17.0 + d, 1.55, 8.5);
+      });
+      rint(13.0, 17.9, 8.0, 9.0, 'meja');
+      [13.8, 15.4, 17.0].forEach(function (x) {
+        silinder(0.28, 0.28, 0.9, 0x3d4a5c, x, 0.45, 9.9, null, 12);
+        silinder(0.32, 0.32, 0.1, 0xf2845c, x, 0.95, 9.9, null, 14);
+        rint(x - 0.35, x + 0.35, 9.55, 10.25, 'kursi');
+      });
+      [[13.6, 13.4], [17.2, 13.4]].forEach(function (p) {
+        silinder(0.8, 0.8, 0.1, 0xe8d9b9, p[0], 1.0, p[1], null, 20);
+        silinder(0.1, 0.1, 0.95, 0x3d4a5c, p[0], 0.5, p[1], null, 8);
+        rint(p[0] - 0.8, p[0] + 0.8, p[1] - 0.8, p[1] + 0.8, 'meja');
+        [-1.35, 1.35].forEach(function (d) {
+          kotak(0.7, 0.1, 0.7, 0xf6c453, p[0] + d, 0.6, p[1]);
+          kotak(0.08, 0.6, 0.7, 0xf6c453, p[0] + d + (d > 0 ? 0.3 : -0.3), 0.9, p[1]);
+          silinder(0.05, 0.05, 0.55, 0x3d4a5c, p[0] + d, 0.28, p[1], null, 8);
+          rint(p[0] + d - 0.4, p[0] + d + 0.4, p[1] - 0.4, p[1] + 0.4, 'kursi');
+        });
+      });
+      [14.0, 15.4, 16.8].forEach(function (x) { lampuHias(x, 4.0, 8.5, 0.28, 2.4); });
+      tanamanHias(19.0, 15.2);
+
+      // Tribun santai: tangga duduk bertingkat dan bean bag
+      [[11.4, 12.6, 0.45, 0xc79a68], [12.6, 13.8, 0.9, 0xb98a5a], [13.8, 15.0, 1.35, 0xa87b4f]].forEach(function (s, i) {
+        kotak(6.4, s[2], s[1] - s[0], s[3], 23.4, s[2] / 2, (s[0] + s[1]) / 2);
+        [0, 1, 2].forEach(function (k) {
+          kotak(0.9, 0.12, 0.6, [0xe8613a, 0x3fb8a6, 0xf6c453][(i + k) % 3], 21.4 + k * 2.0, s[2] + 0.06, (s[0] + s[1]) / 2);
+        });
+      });
+      rint(20.2, 26.6, 11.4, 15.0, 'tangga');
+      beanbag(22.0, 8.6, 0xe8613a, 0.85);
+      beanbag(23.8, 8.2, 0x3fb8a6, 0.85);
+      beanbag(25.6, 8.6, 0xf6c453, 0.85);
+      lampuHias(22.0, 4.2, 9.0, 0.3, 2.2);
+      lampuHias(25.0, 4.2, 9.0, 0.3, 2.2);
+      tanamanHias(26.8, 15.2);
+
+      // Ruang game: tiga mesin arkade, meja biliar, bean bag
+      arkade(29.4, 7.0, 0x2b3a67, 0x7ee2b8);
+      arkade(31.0, 7.0, 0x7a2e4d, 0xffd479);
+      arkade(32.6, 7.0, 0x2e6a5a, 0xf4a6c8);
+      kotak(4.0, 0.9, 2.2, 0x5b3a29, 31.0, 0.45, 12.2);
+      kotak(3.6, 0.1, 1.8, 0x2e8b57, 31.0, 0.93, 12.2);
+      bola(0.14, 0xffffff, 32.0, 1.1, 12.2);
+      bola(0.14, 0xc0392b, 30.2, 1.1, 11.9);
+      bola(0.14, 0xf1c40f, 30.5, 1.1, 12.5);
+      bola(0.14, 0x2563eb, 30.0, 1.1, 12.3);
+      rint(29.0, 33.0, 11.1, 13.3, 'meja');
+      beanbag(28.6, 15.0, 0xe8613a, 0.8);
+      beanbag(34.0, 15.0, 0x3fb8a6, 0.8);
+      lampuHias(30.0, 4.0, 12.2, 0.28, 2.4);
+      lampuHias(32.0, 4.0, 12.2, 0.28, 2.4);
+      tanamanHias(34.2, 6.9);
+      tanamanHias(34.2, 9.8);
 
       /* ---------- OFFICE: jalur jalan dan agent ---------- */
       const N = {
-        W1: [4.0, -6.75], WIN: [6.5, -6.75], W2: [4.0, -2.2], W3: [4.0, 2.4],
-        C1a: [6.0, -2.2], C1b: [9.0, -2.2], C1c: [12.0, -2.2], C1d: [13.9, -2.2],
-        C2a: [6.0, 2.4], C2b: [9.0, 2.4], C2c: [12.0, 2.4], C2d: [13.9, 2.4],
-        D1: [6.0, -3.9], D2: [9.0, -3.9], D3: [12.0, -3.9],
-        D4: [6.0, 1.1], D5: [9.0, 1.1], D6: [12.0, 1.1],
-        PLT: [6.0, 4.8],
-        GD1: [13.9, 3.8], GD2: [15.4, 3.8], GW: [17.0, 3.8],
-        MD: [15.4, -3.0], MS0: [15.6, -1.25], MS1: [19.0, -1.25], MS2: [20.8, -1.25], MS3: [22.6, -1.25],
-        MSE: [24.4, -1.25], MSCR: [24.4, -6.9],
-        K1: [19.0, -2.4], K2: [20.8, -2.4], K3: [22.6, -2.4],
-        GA: [17.0, 2.6], A1: [17.0, 1.9], GB: [18.8, 2.6], A2: [18.8, 1.9], GC: [22.9, 2.6], GD: [25.1, 2.6], SOFA: [25.1, 4.4],
-        GSW: [17.0, 7.4], PC1: [19.2, 7.4], PC2: [20.8, 7.4], P1: [19.2, 6.5], P2: [20.8, 6.5]
+        N1: [4.6, 2.8], N2: [7.1, 2.8], N3: [9.6, 2.8], N4: [12.0, 2.8], N5: [15.2, 2.8], N6: [20.0, 2.8],
+        N7: [23.4, 2.8], N8: [28.0, 2.8], N9: [31.2, 2.8],
+        S1: [7.4, 5.2], S2: [12.0, 5.2], S3: [20.0, 5.2], S4: [22.0, 5.2], S5: [23.8, 5.2], S6: [25.6, 5.2], S7: [28.0, 5.2],
+        C1: [4.6, 0.0], C2: [7.1, 0.0], C3: [9.6, 0.0],
+        D1: [4.6, -2.1], D2: [7.1, -2.1], D3: [9.6, -2.1],
+        AK1: [15.2, 1.2], AKa: [15.2, -2.95], AKb: [13.4, -2.95], AKc: [17.0, -2.95],
+        WA1: [13.4, -4.3], WA2: [17.0, -4.3], WBa: [13.4, 1.2], WBb: [17.0, 1.2], WB1: [13.4, -0.1], WB2: [17.0, -0.1],
+        MD0: [23.4, 0.4], MA1: [21.6, 0.4], MA3: [25.2, 0.4], M1: [21.6, -1.7], M2: [23.4, -1.7], M3: [25.2, -1.7],
+        ST0: [31.2, 0.4], SA1: [31.9, 0.4], SA2: [33.3, 0.4], T1S: [31.9, -1.5], T2S: [33.3, -1.5],
+        L0: [7.4, 9.0], LS1: [4.7, 9.0],
+        PN0: [12.0, 11.4], PN1: [13.8, 11.4], PN2: [15.4, 11.4], PN3: [17.0, 11.4], B1: [13.8, 9.9], B2: [15.4, 9.9], B3: [17.0, 9.9],
+        T1: [22.0, 8.6], T2: [23.8, 8.2], T3: [25.6, 8.6],
+        G0: [28.0, 9.0], GA1: [29.4, 9.0], GA2: [31.0, 9.0], GA3: [32.6, 9.0],
+        A1: [29.4, 8.4], A2: [31.0, 8.4], A3: [32.6, 8.4], PP1: [30.0, 10.1], PP2: [32.0, 10.1],
+        N10: [40.4, 2.8], O0: [40.4, 0.4], OB: [40.4, -1.4], OA1: [38.2, -1.4], OA2: [42.6, -1.4], OW: [38.2, -2.9], OP: [42.6, -2.9],
+        MH1: [40.4, 5.2], MU0: [40.4, 7.8], WU1: [36.6, 7.6], WU2: [38.2, 7.6]
       };
       const SAMBUNGAN = [
-        ['W1', 'WIN'], ['W1', 'W2'], ['W2', 'W3'], ['W2', 'C1a'], ['W3', 'C2a'],
-        ['C1a', 'C1b'], ['C1b', 'C1c'], ['C1c', 'C1d'], ['C2a', 'C2b'], ['C2b', 'C2c'], ['C2c', 'C2d'], ['C1d', 'C2d'],
-        ['C1a', 'D1'], ['C1b', 'D2'], ['C1c', 'D3'], ['C2a', 'D4'], ['C2b', 'D5'], ['C2c', 'D6'],
-        ['C2a', 'PLT'],
-        ['C2d', 'GD1'], ['GD1', 'GD2'], ['GD2', 'GW'],
-        ['C1d', 'MD'], ['MD', 'MS0'], ['MS0', 'MS1'], ['MS1', 'MS2'], ['MS2', 'MS3'], ['MS3', 'MSE'], ['MSE', 'MSCR'],
-        ['MS1', 'K1'], ['MS2', 'K2'], ['MS3', 'K3'],
-        ['GW', 'GA'], ['GA', 'A1'], ['GA', 'GB'], ['GB', 'A2'], ['GB', 'GC'], ['GC', 'GD'], ['GD', 'SOFA'],
-        ['GW', 'GSW'], ['GSW', 'PC1'], ['PC1', 'PC2'], ['PC1', 'P1'], ['PC2', 'P2']
+        ['N1', 'N2'], ['N2', 'N3'], ['N3', 'N4'], ['N4', 'N5'], ['N5', 'N6'], ['N6', 'N7'], ['N7', 'N8'], ['N8', 'N9'],
+        ['S1', 'S2'], ['S2', 'S3'], ['S3', 'S4'], ['S4', 'S5'], ['S5', 'S6'], ['S6', 'S7'],
+        ['N4', 'S2'], ['N6', 'S3'], ['N8', 'S7'],
+        ['N1', 'C1'], ['N2', 'C2'], ['N3', 'C3'], ['C1', 'D1'], ['C2', 'D2'], ['C3', 'D3'],
+        ['N5', 'AK1'], ['AK1', 'WBa'], ['AK1', 'WBb'], ['WBa', 'WB1'], ['WBb', 'WB2'],
+        ['AK1', 'AKa'], ['AKa', 'AKb'], ['AKa', 'AKc'], ['AKb', 'WA1'], ['AKc', 'WA2'],
+        ['N7', 'MD0'], ['MD0', 'MA1'], ['MD0', 'MA3'], ['MD0', 'M2'], ['MA1', 'M1'], ['MA3', 'M3'],
+        ['N9', 'ST0'], ['ST0', 'SA1'], ['SA1', 'SA2'], ['SA1', 'T1S'], ['SA2', 'T2S'],
+        ['S1', 'L0'], ['L0', 'LS1'],
+        ['S2', 'PN0'], ['PN0', 'PN1'], ['PN1', 'PN2'], ['PN2', 'PN3'], ['PN1', 'B1'], ['PN2', 'B2'], ['PN3', 'B3'],
+        ['S4', 'T1'], ['S5', 'T2'], ['S6', 'T3'],
+        ['S7', 'G0'], ['G0', 'GA1'], ['GA1', 'GA2'], ['GA2', 'GA3'],
+        ['GA1', 'A1'], ['GA2', 'A2'], ['GA3', 'A3'], ['GA1', 'PP1'], ['GA3', 'PP2'],
+        ['N9', 'N10'], ['N10', 'O0'], ['O0', 'OB'], ['OB', 'OA1'], ['OB', 'OA2'], ['OA1', 'OW'], ['OA2', 'OP'],
+        ['N10', 'MH1'], ['MH1', 'MU0'], ['MU0', 'WU2'], ['WU2', 'WU1']
       ];
-      // tipe: 'duduk' atau 'berdiri'; hadap: arah pandang [x, z]; lama: rentang detik; bobot: seberapa sering dipilih
+      URUT_MAT.forEach(function (id, i) {
+        const o = i - 2;
+        const mx = TENGAH_SAF[0] + o * JARAK_MAT * SEJAJAR_SAF[0];
+        const mz = TENGAH_SAF[1] + o * JARAK_MAT * SEJAJAR_SAF[1];
+        N['SH_' + id] = [mx, mz];
+        N['Q_' + id] = [mx - 1.9 * KIBLAT[0], mz - 1.9 * KIBLAT[1]];
+        SAMBUNGAN.push(['Q_' + id, 'SH_' + id]);
+        if (i > 0) SAMBUNGAN.push(['Q_' + URUT_MAT[i - 1], 'Q_' + id]);
+      });
+      SAMBUNGAN.push(['MU0', 'Q_' + URUT_MAT[URUT_MAT.length - 1]]);
+      // tipe: 'duduk' atau 'berdiri'; hadap: arah pandang [x, z]; lama: rentang detik; turun: seberapa rendah badan saat duduk
+      function st(id, tipe, hadap, lama, bobot, turun, milik) {
+        return { id: id, simpul: id, tipe: tipe, hadap: hadap, lama: lama, bobot: bobot, turun: turun, milik: milik };
+      }
       const STASIUN = [
-        { id: 'D1', simpul: 'D1', tipe: 'duduk', hadap: [0, -1], lama: [12, 26], bobot: 0.5 },
-        { id: 'D2', simpul: 'D2', tipe: 'duduk', hadap: [0, -1], lama: [12, 26], bobot: 0.5 },
-        { id: 'D3', simpul: 'D3', tipe: 'duduk', hadap: [0, -1], lama: [10, 20], bobot: 0.5 },
-        { id: 'D4', simpul: 'D4', tipe: 'duduk', hadap: [0, -1], lama: [12, 26], bobot: 0.5 },
-        { id: 'D5', simpul: 'D5', tipe: 'duduk', hadap: [0, -1], lama: [10, 20], bobot: 0.5 },
-        { id: 'D6', simpul: 'D6', tipe: 'duduk', hadap: [0, -1], lama: [10, 20], bobot: 0.5 },
-        { id: 'K1', simpul: 'K1', tipe: 'duduk', hadap: [0, -1], lama: [10, 18], bobot: 1.4 },
-        { id: 'K2', simpul: 'K2', tipe: 'duduk', hadap: [0, -1], lama: [10, 18], bobot: 1.4 },
-        { id: 'K3', simpul: 'K3', tipe: 'duduk', hadap: [0, -1], lama: [10, 18], bobot: 1.4 },
-        { id: 'SOFA', simpul: 'SOFA', tipe: 'duduk', hadap: [-1, 0], lama: [8, 16], bobot: 1.1 },
-        { id: 'A1', simpul: 'A1', tipe: 'berdiri', hadap: [0, -1], lama: [6, 12], bobot: 1.1 },
-        { id: 'A2', simpul: 'A2', tipe: 'berdiri', hadap: [0, -1], lama: [6, 12], bobot: 1.1 },
-        { id: 'P1', simpul: 'P1', tipe: 'berdiri', hadap: [0, -1], lama: [6, 12], bobot: 1.1 },
-        { id: 'P2', simpul: 'P2', tipe: 'berdiri', hadap: [0, -1], lama: [6, 12], bobot: 1.1 },
-        { id: 'WIN', simpul: 'WIN', tipe: 'berdiri', hadap: [0, -1], lama: [3, 6], bobot: 0.6 },
-        { id: 'PLT', simpul: 'PLT', tipe: 'berdiri', hadap: [-1, 1], lama: [3, 6], bobot: 0.6 },
-        { id: 'LAYAR', simpul: 'MSCR', tipe: 'berdiri', hadap: [0, -1], lama: [4, 8], bobot: 0.8 }
-      ];
+        st('D1', 'duduk', [0, -1], [12, 26], 0.5), st('D2', 'duduk', [0, -1], [12, 26], 0.5), st('D3', 'duduk', [0, -1], [10, 20], 0.5),
+        st('WA1', 'duduk', [0, -1], [10, 20], 0.5), st('WA2', 'duduk', [0, -1], [10, 20], 0.5),
+        st('WB1', 'duduk', [0, -1], [10, 20], 0.5), st('WB2', 'duduk', [0, -1], [10, 20], 0.5),
+        st('M1', 'duduk', [0, -1], [10, 18], 1.3), st('M2', 'duduk', [0, -1], [10, 18], 1.3), st('M3', 'duduk', [0, -1], [10, 18], 1.3),
+        { id: 'S1', simpul: 'T1S', tipe: 'duduk', hadap: [0, -1], lama: [12, 24], bobot: 1.0 },
+        { id: 'S2', simpul: 'T2S', tipe: 'duduk', hadap: [0, -1], lama: [12, 24], bobot: 1.0 },
+        st('LS1', 'duduk', [1, 0], [8, 16], 1.0),
+        st('B1', 'duduk', [0, -1], [8, 16], 1.1, 0.02), st('B2', 'duduk', [0, -1], [8, 16], 1.1, 0.02), st('B3', 'duduk', [0, -1], [8, 16], 1.1, 0.02),
+        st('T1', 'duduk', [0, 1], [8, 16], 1.0, 0.45), st('T2', 'duduk', [0, 1], [8, 16], 1.0, 0.45), st('T3', 'duduk', [0, 1], [8, 16], 1.0, 0.45),
+        st('A1', 'berdiri', [0, -1], [6, 12], 1.0), st('A2', 'berdiri', [0, -1], [6, 12], 1.0), st('A3', 'berdiri', [0, -1], [6, 12], 1.0),
+        st('PP1', 'berdiri', [0, 1], [6, 12], 1.0), st('PP2', 'berdiri', [0, 1], [6, 12], 1.0),
+        st('OW', 'duduk', [0, -1], [14, 30], 1.0, undefined, 'owner'),
+        st('OP', 'duduk', [0, -1], [20, 40], 1.0, undefined, 'operasional'),
+        { id: 'WU1', simpul: 'WU1', tipe: 'berdiri', animasi: 'wudhu', hadap: [0, -1], lama: [7, 9], bobot: 0 },
+        { id: 'WU2', simpul: 'WU2', tipe: 'berdiri', animasi: 'wudhu', hadap: [0, -1], lama: [7, 9], bobot: 0 }
+      ].concat(URUT_MAT.map(function (id) {
+        return { id: 'SH_' + id, simpul: 'SH_' + id, tipe: 'sholat', hadap: KIBLAT, lama: [DURASI_SHOLAT, DURASI_SHOLAT], bobot: 0, milik: id };
+      }));
       const stasiunById = {};
       STASIUN.forEach(function (s) { stasiunById[s.id] = s; });
       const pakai = {}; // id stasiun -> id agent yang memakai atau menuju ke sana
@@ -773,6 +1561,17 @@
       info.sambungan = SAMBUNGAN;
       info.stasiun = STASIUN;
       info.rintangan = rintangan;
+      info.fokus = {
+        semua: { x: 14.2, y: 4.2, z: 2.3, zoom: 1 },
+        kebun: { x: -12, y: 2.5, z: 0, zoom: 1.8 },
+        kerja: { x: 11.4, y: 2.5, z: -2.5, zoom: 2.2 },
+        meeting: { x: 23.4, y: 2.5, z: -3, zoom: 2.8 },
+        studio: { x: 31.2, y: 2.5, z: -3, zoom: 2.8 },
+        lobi: { x: 11.4, y: 2.5, z: 11, zoom: 2.4 },
+        santai: { x: 28.5, y: 2.5, z: 11, zoom: 2.2 },
+        owner: { x: 40.4, y: 2.5, z: -3, zoom: 2.6 },
+        musholla: { x: 40.2, y: 2.5, z: 11, zoom: 2.6 }
+      };
 
       const tetangga = {};
       Object.keys(N).forEach(function (k) { tetangga[k] = []; });
@@ -850,18 +1649,22 @@
         ctx.fillText(teks, W / 2, H / 2 + 1);
         ctx.textAlign = 'left';
       }
-      function bikinAgen(id, nama, opsi, rumahId, lebarLabel) {
+      function bikinAgen(id, nama, opsi, rumahId) {
         const orang = bikinManusia(opsi);
         scene.add(orang.grup);
-        const st = stasiunById[rumahId];
-        orang.grup.position.set(N[st.simpul][0], 0, N[st.simpul][1]);
-        orang.grup.rotation.y = Math.atan2(st.hadap[0], st.hadap[1]);
-        if (st.tipe === 'duduk') poseDuduk(orang);
-        pakai[st.id] = id;
+        const stRumah = stasiunById[rumahId];
+        orang.grup.position.set(N[stRumah.simpul][0], 0, N[stRumah.simpul][1]);
+        orang.grup.rotation.y = Math.atan2(stRumah.hadap[0], stRumah.hadap[1]);
+        if (stRumah.tipe === 'duduk') poseDuduk(orang, stRumah.turun);
+        pakai[stRumah.id] = id;
 
         const x = orang.grup.position.x;
         const z = orang.grup.position.z;
-        const cl = bikinCanvas(Math.round(lebarLabel * 40), 64);
+        const ukur = bikinCanvas(8, 8).getContext('2d');
+        ukur.font = '600 30px system-ui, sans-serif';
+        const lebarPx = Math.max(200, Math.ceil(ukur.measureText(nama).width) + 54 + 26);
+        const lebarLabel = lebarPx / 40;
+        const cl = bikinCanvas(lebarPx, 64);
         gambarLabel(cl, nama, true);
         const sl = spriteDariCanvas(cl, lebarLabel, 1.6);
         sl.sprite.position.set(x, 4.3 + orang.grup.position.y, z);
@@ -874,32 +1677,44 @@
         scene.add(sg.sprite);
 
         const agen = Object.assign(orang, {
-          id: id, nama: nama, rumah: rumahId, simpul: st.simpul,
+          id: id, nama: nama, rumah: rumahId, simpul: stRumah.simpul,
+          matId: 'SH_' + id, perluSholat: false, tahapSholat: null, sudahSholat: null, idSholat: null, waktuSholat: 0, jumlahSholat: 0,
           canvasLabel: cl, texLabel: sl.tex, spriteLabel: sl.sprite,
           canvasGelembung: cg, texGelembung: sg.tex, spriteGelembung: sg.sprite,
           sisa: 0, fase: Math.random() * 6, kunjungan: 0
         });
         info.agen[id] = agen;
-        jalankanAgen(agen, st);
+        jalankanAgen(agen, stRumah);
         return agen;
       }
 
-      // Agent berpindah antar tempat kerja, ruang meeting, dan ruang game. Hanya animasi.
+      // Agent berpindah antar tempat kerja, ruang meeting, studio, pantry, tribun, ruang game, dan musholla. Hanya animasi.
       function jalankanAgen(a, awal) {
         let keadaan = 'tinggal';
-        let st = awal;
+        let sekarang = awal;
         let rute = [];
         let tujuan = null;
         let sisaTinggal = awal.lama[0] + Math.random() * (awal.lama[1] - awal.lama[0]);
         let tunggu = 0;
-        const KECEPATAN = 1.4;
+        const KECEPATAN = 1.5;
 
+        function khusus(sta) { return sta.tipe === 'sholat' || sta.animasi === 'wudhu'; }
         function pilihTujuan() {
-          const kandidat = STASIUN.filter(function (s) { return s.id !== st.id && !pakai[s.id]; });
+          if (a.perluSholat) {
+            const ids = a.tahapSholat === 'wudhu' ? ['WU1', 'WU2'] : [a.matId];
+            for (let i = 0; i < ids.length; i++) {
+              const sta = stasiunById[ids[i]];
+              if (sta.id !== sekarang.id && !pakai[sta.id]) return sta;
+            }
+            return null;
+          }
+          const kandidat = STASIUN.filter(function (sta) {
+            return sta.id !== sekarang.id && !pakai[sta.id] && !khusus(sta) && (!sta.milik || sta.milik === a.id);
+          });
           if (!kandidat.length) return null;
           let total = 0;
-          const bobot = kandidat.map(function (s) {
-            const w = s.id === a.rumah ? 3 : (s.bobot || 1);
+          const bobot = kandidat.map(function (sta) {
+            const w = sta.id === a.rumah ? (a.betah || 3) : (sta.bobot === undefined ? 1 : sta.bobot) * (a.rajin === undefined ? 1 : a.rajin);
             total += w;
             return w;
           });
@@ -937,17 +1752,39 @@
           }
           return false;
         }
+        function selesaiSholat() {
+          a.pasangIbadah(false);
+          a.perluSholat = false;
+          a.tahapSholat = null;
+          a.sudahSholat = a.idSholat;
+          a.jumlahSholat++;
+          diam(a);
+          a.grup.position.y = 0;
+        }
 
         const fn = function (dt, t) {
           const p = a.grup.position;
           if (keadaan === 'tinggal') {
             sisaTinggal -= dt;
-            if (st.tipe === 'berdiri') p.y = Math.sin(t * 1.6 + a.fase) * 0.06;
+            if (sekarang.tipe === 'sholat') {
+              a.waktuSholat += dt;
+              terapkanPose(a, poseSholat(a.waktuSholat));
+            } else if (sekarang.animasi === 'wudhu') {
+              const ayun = Math.sin(t * 6) * 0.5;
+              a.lenganKiri.rotation.x = -1.3 + ayun;
+              a.lenganKanan.rotation.x = -1.3 - ayun;
+              a.badan.rotation.x = 0.25;
+            } else if (sekarang.tipe === 'berdiri') {
+              p.y = Math.sin(t * 1.6 + a.fase) * 0.06;
+            }
+            if (a.perluSholat && !khusus(sekarang) && sisaTinggal > 2) sisaTinggal = 0.3 + Math.random() * 2;
             if (sisaTinggal <= 0) {
+              if (sekarang.tipe === 'sholat') selesaiSholat();
+              else if (sekarang.animasi === 'wudhu' && a.perluSholat) a.tahapSholat = 'sholat';
               const baru = pilihTujuan();
-              const r = baru ? cariRute(st.simpul, baru.simpul) : null;
+              const r = baru ? cariRute(sekarang.simpul, baru.simpul) : null;
               if (baru && r) {
-                delete pakai[st.id];
+                delete pakai[sekarang.id];
                 pakai[baru.id] = a.id;
                 tujuan = baru;
                 rute = r;
@@ -967,12 +1804,20 @@
                 tunggu = 0;
                 a.simpul = rute.shift();
                 if (!rute.length) {
-                  st = tujuan;
+                  sekarang = tujuan;
                   keadaan = 'tinggal';
                   diam(a);
-                  a.grup.rotation.y = Math.atan2(st.hadap[0], st.hadap[1]);
-                  if (st.tipe === 'duduk') poseDuduk(a); else p.y = 0;
-                  sisaTinggal = st.lama[0] + Math.random() * (st.lama[1] - st.lama[0]);
+                  a.grup.rotation.y = Math.atan2(sekarang.hadap[0], sekarang.hadap[1]);
+                  if (sekarang.tipe === 'sholat') {
+                    a.pasangIbadah(true);
+                    a.waktuSholat = 0;
+                    p.y = 0;
+                  } else if (sekarang.tipe === 'duduk') {
+                    poseDuduk(a, sekarang.turun);
+                  } else {
+                    p.y = 0;
+                  }
+                  sisaTinggal = sekarang.lama[0] + Math.random() * (sekarang.lama[1] - sekarang.lama[0]);
                   a.kunjungan++;
                 }
               }
@@ -985,9 +1830,24 @@
         animasi.push(fn);
       }
 
-      bikinAgen('pengingat', 'Pengingat', { baju: 0x2f9e8f, celana: 0x2d3748, kulit: 0xe0ac82, rambut: 0x1c1917, kuncir: true, badge: 0x4ade80 }, 'D1', 7);
-      bikinAgen('cuaca', 'Cuaca', { baju: 0x3b82c4, celana: 0x2d3748, kulit: 0xf0c9a0, rambut: 0x1c1917, badge: 0x4ade80 }, 'D2', 6);
-      bikinAgen('riset', 'Riset sosmed', { baju: 0x7c6bd6, celana: 0x3b3f4a, kulit: 0xc68a5c, rambut: 0x5b3a29, headphone: true, badge: 0x4ade80 }, 'D4', 7);
+      bikinAgen('pengingat', 'Schedule Master', { baju: 0x2f9e8f, celana: 0x2d3748, kulit: 0xe0ac82, rambut: 0x1c1917, kuncir: true, jenis: 'perempuan', badge: 0x4ade80 }, 'D1');
+      bikinAgen('cuaca', 'Climate Analyst', { baju: 0x3b82c4, celana: 0x2d3748, kulit: 0xf0c9a0, rambut: 0x1c1917, jenis: 'laki', badge: 0x4ade80 }, 'D2');
+      bikinAgen('riset', 'Growth Strategist', { baju: 0x7c6bd6, celana: 0x3b3f4a, kulit: 0xc68a5c, rambut: 0x5b3a29, headphone: true, jenis: 'perempuan', badge: 0x4ade80 }, 'S1');
+      bikinAgen('owner', 'Founder & CEO', { baju: 0x16213a, lenganBaju: 0x16213a, celana: 0x16213a, kulit: 0xf0c9a0, rambut: 0x1c1917, kacamata: true, jas: true, dasi: 0xe8613a, jenis: 'laki', badge: 0xf6c453 }, 'OW');
+      bikinAgen('operasional', 'Cashflow Controller', { baju: 0xf2845c, celana: 0x3b3f4a, kulit: 0xd9a679, rambut: 0x3b2a1e, kacamata: true, jenis: 'laki', badge: 0xf6c453 }, 'OP');
+      info.agen.operasional.betah = 8;
+      info.agen.operasional.rajin = 0.4;
+      // Memulai waktu sholat: setiap agent berwudhu lalu sholat di sajadahnya, sekali per waktu.
+      api.mulaiSholat = function (idWaktu) {
+        info.sholat = { id: idWaktu };
+        Object.keys(info.agen).forEach(function (k) {
+          const a = info.agen[k];
+          if (a.sudahSholat === idWaktu || a.perluSholat) return;
+          a.perluSholat = true;
+          a.tahapSholat = 'wudhu';
+          a.idSholat = idWaktu;
+        });
+      };
 
       animasi.push(function (dt) {
         Object.keys(info.agen).forEach(function (id) {
@@ -1036,7 +1896,7 @@
 
     const dunia = buatDunia(THREE);
 
-    const pusat = new THREE.Vector3(2.5, 4, 0);
+    const pusat = new THREE.Vector3(14.2, 4.2, 2.3);
     const kamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 300);
     kamera.position.set(pusat.x + 34, pusat.y + 30, pusat.z + 34);
     kamera.lookAt(pusat);
@@ -1047,7 +1907,7 @@
     kontrol.enableDamping = true;
     kontrol.dampingFactor = 0.08;
     kontrol.minZoom = 0.7;
-    kontrol.maxZoom = 3;
+    kontrol.maxZoom = 4;
     kontrol.minPolarAngle = 0.5;
     kontrol.maxPolarAngle = 1.25;
     kontrol.minAzimuthAngle = 0.15;
@@ -1058,7 +1918,7 @@
       const w = wadah.clientWidth || window.innerWidth;
       const h = wadah.clientHeight || window.innerHeight;
       const aspek = w / h;
-      const tinggiPandang = Math.max(36, 52 / aspek);
+      const tinggiPandang = Math.max(46, 66 / aspek);
       kamera.left = -tinggiPandang * aspek / 2;
       kamera.right = tinggiPandang * aspek / 2;
       kamera.top = tinggiPandang / 2;
@@ -1069,6 +1929,178 @@
     window.addEventListener('resize', ukur);
     ukur();
 
+    /* Footer jobdesk: dibuka di layar lebar, ditutup di layar kecil */
+    const footerJobdesk = document.getElementById('jobdesk');
+    const tombolJobdesk = document.getElementById('tombol-jobdesk');
+    function perbaruiTinggiFooter() {
+      document.documentElement.style.setProperty('--tinggi-footer', footerJobdesk.getBoundingClientRect().height + 'px');
+      ukur();
+    }
+    function aturFooter(buka) {
+      footerJobdesk.classList.toggle('buka', buka);
+      tombolJobdesk.textContent = buka ? 'Sembunyikan' : 'Tampilkan';
+      tombolJobdesk.setAttribute('aria-expanded', String(buka));
+      perbaruiTinggiFooter();
+    }
+    tombolJobdesk.addEventListener('click', function () { aturFooter(!footerJobdesk.classList.contains('buka')); });
+    window.addEventListener('resize', perbaruiTinggiFooter);
+    aturFooter(window.innerWidth >= 900 && window.innerHeight >= 720);
+
+    /* Kontrol tampilan: pindah fokus kamera, tur, malam, neon, foto */
+    const fokus = dunia.info.fokus;
+    let tween = null;
+    let tur = null;
+    const tombolFokus = Array.prototype.slice.call(document.querySelectorAll('[data-fokus]'));
+    function tandaiFokus(nama) {
+      tombolFokus.forEach(function (b) { b.classList.toggle('aktif', b.getAttribute('data-fokus') === nama); });
+    }
+    function pindahFokus(nama) {
+      const f = fokus[nama];
+      if (!f) return;
+      tandaiFokus(nama);
+      tween = {
+        mulai: performance.now(),
+        durasi: 1100,
+        offset: kamera.position.clone().sub(kontrol.target),
+        dariTarget: kontrol.target.clone(),
+        keTarget: new THREE.Vector3(f.x, f.y, f.z),
+        dariZoom: kamera.zoom,
+        keZoom: f.zoom
+      };
+    }
+    function jalankanTween() {
+      if (!tween) return;
+      const t = Math.min(1, (performance.now() - tween.mulai) / tween.durasi);
+      const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      kontrol.target.lerpVectors(tween.dariTarget, tween.keTarget, e);
+      kamera.zoom = tween.dariZoom + (tween.keZoom - tween.dariZoom) * e;
+      kamera.position.copy(kontrol.target).add(tween.offset);
+      kamera.updateProjectionMatrix();
+      if (t >= 1) tween = null;
+    }
+    const tombolTur = document.getElementById('tombol-tur');
+    function hentikanTur() {
+      if (!tur) return;
+      clearInterval(tur.pengatur);
+      tur = null;
+      tombolTur.classList.remove('aktif');
+      tombolTur.textContent = 'Tur';
+    }
+    function mulaiTur() {
+      const urutan = ['kebun', 'kerja', 'meeting', 'studio', 'owner', 'musholla', 'lobi', 'santai', 'semua'];
+      let i = 0;
+      pindahFokus(urutan[0]);
+      tur = { pengatur: setInterval(function () { i = (i + 1) % urutan.length; pindahFokus(urutan[i]); }, 5500) };
+      tombolTur.classList.add('aktif');
+      tombolTur.textContent = 'Berhenti';
+    }
+    tombolFokus.forEach(function (b) {
+      b.addEventListener('click', function () {
+        hentikanTur();
+        pindahFokus(b.getAttribute('data-fokus'));
+      });
+    });
+    tombolTur.addEventListener('click', function () { if (tur) hentikanTur(); else mulaiTur(); });
+    let malam = false;
+    const tombolMalam = document.getElementById('tombol-malam');
+    tombolMalam.addEventListener('click', function () {
+      malam = !malam;
+      dunia.api.setMalam(malam);
+      tombolMalam.textContent = malam ? 'Siang' : 'Malam';
+      tombolMalam.classList.toggle('aktif', malam);
+    });
+    let neon = true;
+    const tombolNeon = document.getElementById('tombol-neon');
+    tombolNeon.addEventListener('click', function () {
+      neon = !neon;
+      dunia.api.setNeon(neon);
+      tombolNeon.classList.toggle('aktif', neon);
+    });
+    document.getElementById('tombol-foto').addEventListener('click', function () {
+      renderer.render(dunia.scene, kamera);
+      const a = document.createElement('a');
+      a.href = renderer.domElement.toDataURL('image/png');
+      a.download = 'cocotani-office.png';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    });
+    renderer.domElement.addEventListener('pointerdown', function () {
+      tween = null;
+      hentikanTur();
+    });
+
+    /* Waktu sholat Makassar (hitungan astronomi, perkiraan) dan tombol Sholat */
+    function hitungWaktuSholat(y, m, d) {
+      const LAT = -5.1664, LNG = 119.5008, TZ = 8, IHTIYAT = 2;
+      const rad = Math.PI / 180, deg = 180 / Math.PI;
+      const sin = function (x) { return Math.sin(x * rad); };
+      const cos = function (x) { return Math.cos(x * rad); };
+      const tan = function (x) { return Math.tan(x * rad); };
+      const fixAngle = function (a) { return ((a % 360) + 360) % 360; };
+      const fixHour = function (h) { return ((h % 24) + 24) % 24; };
+      let yy = y, mm = m;
+      if (mm <= 2) { yy -= 1; mm += 12; }
+      const A = Math.floor(yy / 100);
+      const B = 2 - A + Math.floor(A / 4);
+      const jd = Math.floor(365.25 * (yy + 4716)) + Math.floor(30.6001 * (mm + 1)) + d + B - 1524.5 - LNG / (15 * 24);
+      const D = jd - 2451545.0;
+      const g = fixAngle(357.529 + 0.98560028 * D);
+      const q = fixAngle(280.459 + 0.98564736 * D);
+      const L = fixAngle(q + 1.915 * sin(g) + 0.020 * sin(2 * g));
+      const e = 23.439 - 0.00000036 * D;
+      const RA = fixAngle(Math.atan2(cos(e) * sin(L), cos(L)) * deg) / 15;
+      const decl = Math.asin(sin(e) * sin(L)) * deg;
+      let eqt = q / 15 - fixHour(RA);
+      if (eqt > 12) eqt -= 24;
+      if (eqt < -12) eqt += 24;
+      const dzuhur = 12 + TZ - LNG / 15 - eqt;
+      const sudut = function (a, arah) {
+        const t = Math.acos((-sin(a) - sin(decl) * sin(LAT)) / (cos(decl) * cos(LAT))) * deg / 15;
+        return arah === 'ccw' ? dzuhur - t : dzuhur + t;
+      };
+      const sudutAshar = -Math.atan(1 / (1 + tan(Math.abs(LAT - decl)))) * deg;
+      const t = {
+        subuh: sudut(20, 'ccw'),
+        dzuhur: dzuhur,
+        ashar: dzuhur + Math.acos((-sin(sudutAshar) - sin(decl) * sin(LAT)) / (cos(decl) * cos(LAT))) * deg / 15,
+        maghrib: sudut(0.833, 'cw'),
+        isya: sudut(18, 'cw')
+      };
+      const hasil = {};
+      Object.keys(t).forEach(function (k) { hasil[k] = Math.round(t[k] * 60 + IHTIYAT); });
+      return hasil;
+    }
+    const NAMA_SHOLAT = { subuh: 'Subuh', dzuhur: 'Dzuhur', ashar: 'Ashar', maghrib: 'Maghrib', isya: 'Isya' };
+    function fmtMenit(mn) { return String(Math.floor(mn / 60)).padStart(2, '0') + '.' + String(mn % 60).padStart(2, '0'); }
+    let sholatDipicu = '';
+    function periksaWaktuSholat() {
+      const w = new Date(Date.now() + 8 * 3600 * 1000);
+      const y = w.getUTCFullYear(), m = w.getUTCMonth() + 1, d = w.getUTCDate();
+      const menit = w.getUTCHours() * 60 + w.getUTCMinutes();
+      const jadwal = hitungWaktuSholat(y, m, d);
+      let berikut = null;
+      Object.keys(NAMA_SHOLAT).forEach(function (k) {
+        if (menit >= jadwal[k] && menit < jadwal[k] + 20) {
+          const id = y + '-' + m + '-' + d + '-' + k;
+          if (id !== sholatDipicu) {
+            sholatDipicu = id;
+            dunia.api.mulaiSholat(id);
+          }
+        }
+        if (berikut === null && jadwal[k] > menit) berikut = NAMA_SHOLAT[k] + ' ' + fmtMenit(jadwal[k]);
+      });
+      if (berikut === null) berikut = 'Subuh ' + fmtMenit(jadwal.subuh) + ' (besok)';
+      document.getElementById('waktu-sholat').textContent = 'Sholat berikutnya: ' + berikut + ' WITA';
+    }
+    periksaWaktuSholat();
+    setInterval(periksaWaktuSholat, 20000);
+    document.getElementById('tombol-sholat').addEventListener('click', function () {
+      hentikanTur();
+      pindahFokus('musholla');
+      dunia.api.mulaiSholat('demo-' + Date.now());
+    });
+
     const kurangiGerak = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const jam = new THREE.Clock();
     renderer.setAnimationLoop(function () {
@@ -1078,6 +2110,7 @@
         if (kurangiGerak && fn.dekoratif) return;
         fn(dt, t);
       });
+      jalankanTween();
       kontrol.update();
       renderer.render(dunia.scene, kamera);
     });
@@ -1085,7 +2118,7 @@
     /* Logo di dinding office: memakai berkas logo-cocotani.png kalau ada di folder yang sama. */
     const berkasLogo = new Image();
     berkasLogo.onload = function () { dunia.api.setLogoGambar(berkasLogo); };
-    berkasLogo.src = 'logo-cocotani.png?v=7';
+    berkasLogo.src = 'logo-cocotani.png?v=8';
 
     /* Ketuk layar di dinding office untuk membuka dashboard */
     const raycaster = new THREE.Raycaster();
@@ -1134,8 +2167,6 @@
       }
     }
     if (DATA_URL) {
-      document.getElementById('catatan-contoh').textContent =
-        'Angka sensor di kebun dibaca dari Blynk dan diperbarui tiap 2 menit. Status agent masih contoh. Petani dan agent yang berjalan hanya animasi.';
       dunia.api.setSensor({ online: false, suhu: null, kelembapan: null, ph: null, tds: null, keterangan: 'Memuat data Blynk' });
       muatData();
       setInterval(muatData, JEDA_MUAT_DATA_MS);
