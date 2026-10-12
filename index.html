@@ -54,6 +54,12 @@
       font-weight: 400;
     }
 
+    .aksi {
+      display: flex;
+      gap: 8px;
+      flex: none;
+    }
+
     .tombol {
       flex: none;
       padding: 8px 14px;
@@ -104,8 +110,11 @@
 <body>
   <header class="bar">
     <h1 class="judul">Cocotani Hidroponik <span>Dashboard</span></h1>
-    <a class="tombol" id="layar-penuh" target="_blank" rel="noopener"
-       href="https://datastudio.google.com/reporting/af1fda7b-3bc9-42cc-8b13-034de4cfee2d/page/HmfZF">Buka layar penuh</a>
+    <div class="aksi">
+      <a class="tombol" href="kebun.html">Kebun 3D</a>
+      <a class="tombol" id="layar-penuh" target="_blank" rel="noopener"
+         href="https://datastudio.google.com/reporting/af1fda7b-3bc9-42cc-8b13-034de4cfee2d/page/HmfZF">Buka layar penuh</a>
+    </div>
   </header>
 
   <main class="panggung">

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Kebun dan office Cocotani</title>
+  <style>
+    :root {
+      --latar: #0a110b;
+      --garis: #1d2a1b;
+      --teks: #e6eee3;
+      --teks-redup: #8fa08b;
+      --hijau: #86c440;
+      --tinggi-bar: 52px;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--latar);
+      color: var(--teks);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+    .bar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      height: var(--tinggi-bar);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--garis);
+      background: var(--latar);
+      z-index: 3;
+    }
+    .judul {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tombol {
+      flex: none;
+      padding: 8px 14px;
+      border: 1px solid var(--hijau);
+      border-radius: 6px;
+      color: var(--hijau);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .tombol:hover { background: var(--hijau); color: #000; }
+    .tombol:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
+
+    #kanvas {
+      position: fixed;
+      inset: var(--tinggi-bar) 0 0 0;
+      touch-action: none;
+    }
+    #kanvas canvas { display: block; }
+
+    .catatan {
+      position: fixed;
+      left: 16px;
+      right: 16px;
+      bottom: 12px;
+      z-index: 2;
+      pointer-events: none;
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      color: var(--teks-redup);
+    }
+    .catatan p { margin: 0; }
+    .catatan .contoh { color: #d8b45a; }
+
+    .pesan {
+      position: fixed;
+      inset: var(--tinggi-bar) 0 0 0;
+      display: none;
+      place-content: center;
+      padding: 24px;
+      text-align: center;
+      color: var(--teks-redup);
+      line-height: 1.6;
+    }
+
+    @media (max-width: 480px) {
+      .judul { font-size: 0.9375rem; }
+    }
+  </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="bar">
+    <h1 class="judul">Kebun dan office Cocotani</h1>
+    <a class="tombol" href="./">Dashboard keuangan</a>
+  </header>
+
+  <div id="kanvas" aria-label="Tampilan 3D kebun hidroponik dan office agent"></div>
+
+  <div class="catatan">
+    <p>Geser untuk memutar, cubit untuk memperbesar. Ketuk layar di dinding office untuk membuka dashboard.</p>
+    <p class="contoh" id="catatan-contoh">Tampilan contoh: angka sensor dan status agent belum terhubung ke data asli. Petani yang berjalan hanya animasi.</p>
+  </div>
+
+  <div class="pesan" id="pesan">
+    <p>Tampilan 3D tidak bisa dimuat di browser ini.<br>Coba buka dengan Chrome atau Safari versi terbaru.</p>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // Isi dengan alamat data asli (JSON) kalau sudah dihubungkan. Kosong = data contoh.
+    const DATA_URL = '';
+    const DASHBOARD_URL = './';
+    const JEDA_MUAT_DATA_MS = 120000;
+
+    // ==== BUILD START
+    function buatDunia(THREE) {
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a110b);
+      const animasi = [];
+      const klikTarget = [];
+      const api = {};
+      const info = { rak: [], orang: [], agen: {} };
+
+      /* ---------- Cahaya ---------- */
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x6f7f66, 0.95));
+      const matahari = new THREE.DirectionalLight(0xffffff, 1.0);
+      matahari.position.set(18, 40, 22);
+      matahari.target.position.set(-1.5, 0, 0);
+      matahari.castShadow = true;
+      matahari.shadow.mapSize.set(2048, 2048);
+      matahari.shadow.bias = -0.0005;
+      const sk = matahari.shadow.camera;
+      sk.left = -35; sk.right = 35; sk.top = 35; sk.bottom = -35; sk.near = 1; sk.far = 120;
+      scene.add(matahari);
+      scene.add(matahari.target);
+
+      /* ---------- Helper bentuk ---------- */
+      function mat(warna) {
+        return new THREE.MeshLambertMaterial({ color: warna });
+      }
+      function kotak(w, h, d, warna, x, y, z, induk) {
+        const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(warna));
+        m.position.set(x, y, z);
+        m.castShadow = true;
+        m.receiveShadow = true;
+        (induk || scene).add(m);
+        return m;
+      }
+      function silinder(rAtas, rBawah, h, warna, x, y, z, induk, seg) {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(rAtas, rBawah, h, seg || 20), mat(warna));
+        m.position.set(x, y, z);
+        m.castShadow = true;
+        m.receiveShadow = true;
+        (induk || scene).add(m);
+        return m;
+      }
+      function bola(r, warna, x, y, z, induk) {
+        const m = new THREE.Mesh(new THREE.SphereGeometry(r, 14, 10), mat(warna));
+        m.position.set(x, y, z);
+        m.castShadow = true;
+        (induk || scene).add(m);
+        return m;
+      }
+      function lantai(x1, x2, z1, z2, warnaAtas, warnaSisi) {
+        const sisi = mat(warnaSisi);
+        const atas = mat(warnaAtas);
+        const m = new THREE.Mesh(
+          new THREE.BoxGeometry(x2 - x1, 1, z2 - z1),
+          [sisi, sisi, atas, sisi, sisi, sisi]
+        );
+        m.position.set((x1 + x2) / 2, -0.5, (z1 + z2) / 2);
+        m.receiveShadow = true;
+        scene.add(m);
+        return m;
+      }
+
+      /* ---------- Helper kanvas dan label ---------- */
+      function bikinCanvas(w, h) {
+        const c = document.createElement('canvas');
+        c.width = w;
+        c.height = h;
+        return c;
+      }
+      function bulatRect(ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+      function spriteDariCanvas(canvas, lebar, tinggi) {
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = 4;
+        const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+        sp.scale.set(lebar, tinggi, 1);
+        sp.renderOrder = 10;
+        return { sprite: sp, tex: tex };
+      }
+      function fmt(v, n) {
+        return typeof v === 'number' && isFinite(v) ? v.toFixed(n).replace('.', ',') : '-';
+      }
+
+      /* ---------- Lantai kebun dan office ---------- */
+      lantai(-22, -2, -8, 8, 0xd7e3c3, 0x9aab82); // kebun
+      lantai(3, 19, -8, 8, 0xe6dfcf, 0xa89f8d); // office
+
+      /* ---------- KEBUN: rak selada ---------- */
+      const ZRAK = [-4, 0, 4];
+      const XA = -18;
+      const XB = -4;
+      const tanaman = [];
+      ZRAK.forEach(function (zr) {
+        kotak(XB - XA, 0.9, 1.6, 0xc5ced3, (XA + XB) / 2, 0.45, zr);
+        kotak(XB - XA, 0.25, 1.6, 0xe9eef0, (XA + XB) / 2, 1.02, zr);
+        info.rak.push({ x1: XA, x2: XB, z1: zr - 0.8, z2: zr + 0.8 });
+        for (let x = XA + 0.7; x <= XB - 0.5; x += 0.85) {
+          tanaman.push([x, zr - 0.4]);
+          tanaman.push([x, zr + 0.4]);
+        }
+      });
+      const gSelada = new THREE.InstancedMesh(
+        new THREE.SphereGeometry(0.42, 10, 8),
+        new THREE.MeshLambertMaterial({ color: 0xffffff }),
+        tanaman.length
+      );
+      gSelada.castShadow = true;
+      const tmp = new THREE.Object3D();
+      const hijauA = new THREE.Color(0x5fb54a);
+      const hijauB = new THREE.Color(0x8fd66b);
+      const warnaTmp = new THREE.Color();
+      tanaman.forEach(function (p, i) {
+        const sk2 = 0.9 + Math.random() * 0.25;
+        tmp.position.set(p[0], 1.5, p[1]);
+        tmp.scale.set(sk2, sk2 * 0.85, sk2);
+        tmp.updateMatrix();
+        gSelada.setMatrixAt(i, tmp.matrix);
+        gSelada.setColorAt(i, warnaTmp.copy(hijauA).lerp(hijauB, Math.random()));
+      });
+      gSelada.instanceMatrix.needsUpdate = true;
+      if (gSelada.instanceColor) gSelada.instanceColor.needsUpdate = true;
+      scene.add(gSelada);
+
+      /* ---------- KEBUN: tandon ---------- */
+      silinder(1.1, 1.1, 2.4, 0x4a8fd0, -3, 1.2, -6);
+      silinder(1.15, 1.15, 0.12, 0x8ec3f0, -3, 2.46, -6);
+
+      /* ---------- KEBUN: papan sensor Blynk ---------- */
+      silinder(0.1, 0.1, 2.4, 0x8a8f98, -3, 1.2, 2, null, 8);
+      const canvasSensor = bikinCanvas(360, 340);
+      const spSensor = spriteDariCanvas(canvasSensor, 7.2, 6.8);
+      spSensor.sprite.position.set(-3, 5.6, 2);
+      scene.add(spSensor.sprite);
+      let dataSensor = { online: true, suhu: 27.0, kelembapan: 65.0, ph: 6.0, tds: 800, keterangan: 'Data contoh' };
+
+      function gambarSensor(d) {
+        const ctx = canvasSensor.getContext('2d');
+        const W = canvasSensor.width;
+        const H = canvasSensor.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#f8fafc';
+        bulatRect(ctx, 4, 4, W - 8, H - 8, 18);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = '#1f2430';
+        bulatRect(ctx, 4, 4, W - 8, 62, 18);
+        ctx.fill();
+        ctx.fillRect(4, 36, W - 8, 30);
+        ctx.fillStyle = d.online ? '#4ade80' : '#9ca3af';
+        ctx.beginPath();
+        ctx.arc(34, 35, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 30px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.fillText(d.online ? 'Blynk online' : 'Blynk offline', 54, 36);
+        const baris = [
+          ['Suhu', fmt(d.suhu, 1) + ' °C', '#e8613a'],
+          ['Kelembapan', fmt(d.kelembapan, 1) + ' %', '#57bfc0'],
+          ['pH', fmt(d.ph, 1), '#a8d63f'],
+          ['TDS', fmt(d.tds, 0), '#b5bcc4']
+        ];
+        baris.forEach(function (b, i) {
+          const y = 80 + i * 56;
+          ctx.fillStyle = b[2];
+          ctx.fillRect(20, y, 8, 40);
+          ctx.fillStyle = '#1f2430';
+          ctx.font = '500 34px system-ui, sans-serif';
+          ctx.textAlign = 'left';
+          ctx.fillText(b[0], 42, y + 21);
+          ctx.textAlign = 'right';
+          ctx.fillText(b[1], W - 24, y + 21);
+        });
+        ctx.fillStyle = '#64748b';
+        ctx.font = '24px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(d.keterangan || '', W / 2, H - 22);
+        ctx.textAlign = 'left';
+      }
+      gambarSensor(dataSensor);
+
+      api.setSensor = function (d) {
+        dataSensor = Object.assign({}, dataSensor, d);
+        gambarSensor(dataSensor);
+        spSensor.tex.needsUpdate = true;
+      };
+
+      /* ---------- KEBUN: petani ---------- */
+      function bikinOrang(warnaBaju) {
+        const g = new THREE.Group();
+        const kiri = new THREE.Group();
+        const kanan = new THREE.Group();
+        kiri.position.set(-0.25, 0.9, 0);
+        kanan.position.set(0.25, 0.9, 0);
+        kotak(0.34, 0.9, 0.34, 0x3d4a5c, 0, -0.45, 0, kiri);
+        kotak(0.34, 0.9, 0.34, 0x3d4a5c, 0, -0.45, 0, kanan);
+        g.add(kiri);
+        g.add(kanan);
+        kotak(0.9, 1.0, 0.5, warnaBaju, 0, 1.4, 0, g);
+        bola(0.38, 0xf0c9a0, 0, 2.2, 0, g);
+        silinder(0.78, 0.78, 0.08, 0xd9b45a, 0, 2.5, 0, g, 16);
+        silinder(0.34, 0.4, 0.26, 0xd9b45a, 0, 2.66, 0, g, 12);
+        scene.add(g);
+        return { grup: g, kakiKiri: kiri, kakiKanan: kanan };
+      }
+      const arah = new THREE.Vector3();
+      function patroli(orang, titik, kecepatan) {
+        let i = 0;
+        let jeda = Math.random() * 2;
+        orang.grup.position.set(titik[0][0], 0, titik[0][1]);
+        const fn = function (dt, t) {
+          if (jeda > 0) {
+            jeda -= dt;
+            orang.kakiKiri.rotation.x = 0;
+            orang.kakiKanan.rotation.x = 0;
+            orang.grup.position.y = 0;
+            return;
+          }
+          const tujuan = titik[(i + 1) % titik.length];
+          arah.set(tujuan[0] - orang.grup.position.x, 0, tujuan[1] - orang.grup.position.z);
+          const jarak = arah.length();
+          if (jarak < 0.05) {
+            i = (i + 1) % titik.length;
+            jeda = 1 + Math.random() * 2.5;
+            return;
+          }
+          arah.divideScalar(jarak);
+          orang.grup.position.addScaledVector(arah, Math.min(jarak, kecepatan * dt));
+          orang.grup.rotation.y = Math.atan2(arah.x, arah.z);
+          const ayun = Math.sin(t * 7) * 0.6;
+          orang.kakiKiri.rotation.x = ayun;
+          orang.kakiKanan.rotation.x = -ayun;
+          orang.grup.position.y = Math.abs(Math.sin(t * 7)) * 0.05;
+        };
+        fn.dekoratif = true;
+        animasi.push(fn);
+      }
+      const orangA = bikinOrang(0xe8a33d);
+      const orangB = bikinOrang(0xe8a33d);
+      const orangC = bikinOrang(0xe8a33d);
+      info.orang.push(orangA, orangB, orangC);
+      patroli(orangA, [[-19, 2], [-5.5, 2]], 1.6);
+      patroli(orangB, [[-5.5, -2], [-19, -2]], 1.4);
+      patroli(orangC, [[-20, 6.2], [-6, 6.2]], 1.5);
+
+      /* ---------- OFFICE: dinding, jendela, layar ---------- */
+      kotak(16, 5.5, 0.4, 0xd3cec2, 11, 2.75, -7.8);
+      kotak(0.4, 5.5, 16, 0xc3beb2, 3.2, 2.75, 0);
+      kotak(4.4, 3, 0.1, 0x8aa0ad, 6.5, 3.3, -7.58);
+      const kaca = new THREE.Mesh(new THREE.PlaneGeometry(4, 2.6), new THREE.MeshBasicMaterial({ color: 0xbfe3f5 }));
+      kaca.position.set(6.5, 3.3, -7.52);
+      scene.add(kaca);
+
+      kotak(7, 3.6, 0.2, 0x1f2a37, 14.5, 3.3, -7.55);
+      const canvasLayar = bikinCanvas(512, 256);
+      (function () {
+        const ctx = canvasLayar.getContext('2d');
+        const W = canvasLayar.width;
+        const H = canvasLayar.height;
+        ctx.fillStyle = '#1f2a37';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#e6eee3';
+        ctx.font = '600 34px system-ui, sans-serif';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('Dashboard Cocotani', 28, 58);
+        const tinggi = [70, 110, 90, 150, 120, 175];
+        const warna = ['#4a7fe0', '#e8613a', '#5ec27a'];
+        tinggi.forEach(function (t, i) {
+          ctx.fillStyle = warna[i % 3];
+          ctx.fillRect(40 + i * 70, 215 - t, 44, t);
+        });
+        ctx.fillStyle = '#8fa08b';
+        ctx.font = '24px system-ui, sans-serif';
+        ctx.fillText('Ketuk untuk membuka', 28, H - 14);
+      })();
+      const texLayar = new THREE.CanvasTexture(canvasLayar);
+      texLayar.colorSpace = THREE.SRGBColorSpace;
+      const layar = new THREE.Mesh(new THREE.PlaneGeometry(6.6, 3.2), new THREE.MeshBasicMaterial({ map: texLayar }));
+      layar.position.set(14.5, 3.3, -7.43);
+      scene.add(layar);
+      klikTarget.push(layar);
+
+      /* ---------- OFFICE: karpet, meja rapat, tanaman ---------- */
+      silinder(4.2, 4.2, 0.04, 0xd3c5a8, 11, 0.02, 1, null, 40);
+      silinder(0.3, 0.3, 1.1, 0x8f6740, 11, 0.55, 1);
+      silinder(2.6, 2.6, 0.25, 0xc79a68, 11, 1.2, 1, null, 40);
+      silinder(0.45, 0.35, 0.5, 0xb0654a, 4.6, 0.25, 6.4, null, 12);
+      bola(0.7, 0x4f9d4a, 4.6, 1.0, 6.4);
+      bola(0.5, 0x5fb356, 4.1, 0.85, 6.2);
+      bola(0.5, 0x5fb356, 5.1, 0.9, 6.7);
+
+      /* ---------- OFFICE: agent ---------- */
+      function gambarLabel(canvas, teks, aktif) {
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#1f2430';
+        bulatRect(ctx, 4, 4, W - 8, H - 8, 16);
+        ctx.fill();
+        ctx.fillStyle = aktif ? '#4ade80' : '#9ca3af';
+        ctx.beginPath();
+        ctx.arc(30, H / 2, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '600 30px system-ui, sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.fillText(teks, 54, H / 2 + 1);
+      }
+      function gambarGelembung(canvas, teks) {
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#ffffff';
+        bulatRect(ctx, 4, 4, W - 8, H - 8, 22);
+        ctx.fill();
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        let ukuran = 34;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#1f2430';
+        do {
+          ctx.font = '500 ' + ukuran + 'px system-ui, sans-serif';
+          ukuran -= 2;
+        } while (ctx.measureText(teks).width > W - 40 && ukuran > 16);
+        ctx.fillText(teks, W / 2, H / 2 + 1);
+        ctx.textAlign = 'left';
+      }
+      function bikinAgen(id, nama, warna, x, z, lebarLabel) {
+        const g = new THREE.Group();
+        g.position.set(x, 0, z);
+        kotak(0.4, 0.9, 0.4, 0x3d4a5c, -0.3, 0.45, 0, g);
+        kotak(0.4, 0.9, 0.4, 0x3d4a5c, 0.3, 0.45, 0, g);
+        kotak(1.1, 1.2, 0.7, warna, 0, 1.5, 0, g);
+        kotak(0.9, 0.8, 0.8, 0xd5dde8, 0, 2.5, 0, g);
+        kotak(0.14, 0.14, 0.05, 0x1f2430, -0.2, 2.55, 0.42, g);
+        kotak(0.14, 0.14, 0.05, 0x1f2430, 0.2, 2.55, 0.42, g);
+        kotak(0.06, 0.4, 0.06, 0x8a97a8, 0, 3.1, 0, g);
+        bola(0.12, 0xf59e0b, 0, 3.4, 0, g);
+        g.rotation.y = Math.atan2(11 - x, 1 - z);
+        scene.add(g);
+
+        const cl = bikinCanvas(Math.round(lebarLabel * 40), 64);
+        gambarLabel(cl, nama, true);
+        const sl = spriteDariCanvas(cl, lebarLabel, 1.6);
+        sl.sprite.position.set(x, 4.9, z);
+        scene.add(sl.sprite);
+
+        const cg = bikinCanvas(512, 112);
+        const sg = spriteDariCanvas(cg, 12, 2.6);
+        sg.sprite.position.set(x, 7, z);
+        sg.sprite.visible = false;
+        scene.add(sg.sprite);
+
+        const agen = { id: id, nama: nama, grup: g, canvasLabel: cl, texLabel: sl.tex, canvasGelembung: cg, texGelembung: sg.tex, spriteGelembung: sg.sprite, sisa: 0, fase: Math.random() * 6 };
+        info.agen[id] = agen;
+        return agen;
+      }
+      bikinAgen('pengingat', 'Pengingat', 0x2f9e8f, 7.6, 1, 7);
+      bikinAgen('cuaca', 'Cuaca', 0x3b82c4, 14.4, 1, 6);
+      bikinAgen('riset', 'Riset sosmed', 0x7c6bd6, 11, -2.4, 7);
+
+      const gerakAgen = function (dt, t) {
+        Object.keys(info.agen).forEach(function (id) {
+          const a = info.agen[id];
+          a.grup.position.y = Math.sin(t * 1.6 + a.fase) * 0.06;
+        });
+      };
+      gerakAgen.dekoratif = true;
+      animasi.push(gerakAgen);
+      animasi.push(function (dt) {
+        Object.keys(info.agen).forEach(function (id) {
+          const a = info.agen[id];
+          if (a.sisa > 0) {
+            a.sisa -= dt;
+            if (a.sisa <= 0) a.spriteGelembung.visible = false;
+          }
+        });
+      });
+
+      api.setStatusAgen = function (id, aktif) {
+        const a = info.agen[id];
+        if (!a) return;
+        gambarLabel(a.canvasLabel, a.nama, !!aktif);
+        a.texLabel.needsUpdate = true;
+      };
+      api.gelembung = function (id, teks, detik) {
+        const a = info.agen[id];
+        if (!a || !teks) return;
+        gambarGelembung(a.canvasGelembung, String(teks));
+        a.texGelembung.needsUpdate = true;
+        a.spriteGelembung.visible = true;
+        a.sisa = detik || 8;
+      };
+
+      return { scene: scene, animasi: animasi, klikTarget: klikTarget, api: api, info: info };
+    }
+    // ==== BUILD END
+
+    /* ================= Penampil ================= */
+    const wadah = document.getElementById('kanvas');
+    const pesan = document.getElementById('pesan');
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch (err) {
+      pesan.style.display = 'grid';
+      wadah.style.display = 'none';
+      throw err;
+    }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    wadah.appendChild(renderer.domElement);
+
+    const dunia = buatDunia(THREE);
+
+    const pusat = new THREE.Vector3(-1.5, 1, 0);
+    const kamera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 300);
+    kamera.position.set(pusat.x + 34, pusat.y + 30, pusat.z + 34);
+    kamera.lookAt(pusat);
+
+    const kontrol = new OrbitControls(kamera, renderer.domElement);
+    kontrol.target.copy(pusat);
+    kontrol.enablePan = false;
+    kontrol.enableDamping = true;
+    kontrol.dampingFactor = 0.08;
+    kontrol.minZoom = 0.7;
+    kontrol.maxZoom = 3;
+    kontrol.minPolarAngle = 0.5;
+    kontrol.maxPolarAngle = 1.25;
+    kontrol.minAzimuthAngle = 0.15;
+    kontrol.maxAzimuthAngle = 1.4;
+    kontrol.update();
+
+    function ukur() {
+      const w = wadah.clientWidth || window.innerWidth;
+      const h = wadah.clientHeight || window.innerHeight;
+      const aspek = w / h;
+      const tinggiPandang = Math.max(34, 58 / aspek);
+      kamera.left = -tinggiPandang * aspek / 2;
+      kamera.right = tinggiPandang * aspek / 2;
+      kamera.top = tinggiPandang / 2;
+      kamera.bottom = -tinggiPandang / 2;
+      kamera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener('resize', ukur);
+    ukur();
+
+    const kurangiGerak = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const jam = new THREE.Clock();
+    renderer.setAnimationLoop(function () {
+      const dt = Math.min(jam.getDelta(), 0.1);
+      const t = jam.elapsedTime;
+      dunia.animasi.forEach(function (fn) {
+        if (kurangiGerak && fn.dekoratif) return;
+        fn(dt, t);
+      });
+      kontrol.update();
+      renderer.render(dunia.scene, kamera);
+    });
+
+    /* Ketuk layar di dinding office untuk membuka dashboard */
+    const raycaster = new THREE.Raycaster();
+    const titik = new THREE.Vector2();
+    let awal = null;
+    function targetDiBawah(e) {
+      const kotakKanvas = renderer.domElement.getBoundingClientRect();
+      titik.x = ((e.clientX - kotakKanvas.left) / kotakKanvas.width) * 2 - 1;
+      titik.y = -((e.clientY - kotakKanvas.top) / kotakKanvas.height) * 2 + 1;
+      raycaster.setFromCamera(titik, kamera);
+      return raycaster.intersectObjects(dunia.klikTarget, false).length > 0;
+    }
+    renderer.domElement.addEventListener('pointerdown', function (e) {
+      awal = { x: e.clientX, y: e.clientY };
+    });
+    renderer.domElement.addEventListener('pointerup', function (e) {
+      if (!awal) return;
+      const geser = Math.hypot(e.clientX - awal.x, e.clientY - awal.y);
+      awal = null;
+      if (geser < 6 && targetDiBawah(e)) window.location.href = DASHBOARD_URL;
+    });
+    renderer.domElement.addEventListener('pointermove', function (e) {
+      renderer.domElement.style.cursor = targetDiBawah(e) ? 'pointer' : 'grab';
+    });
+
+    /* Penghubung data asli (belum dipakai kalau DATA_URL kosong).
+       Format JSON yang diharapkan:
+       { "sensor": { "online": true, "suhu": 27, "kelembapan": 65, "ph": 6, "tds": 800, "keterangan": "Diperbarui 10.30" },
+         "agen": { "pengingat": { "aktif": true, "pesan": "Pengingat token terkirim" }, "cuaca": {...}, "riset": {...} } } */
+    async function muatData() {
+      if (!DATA_URL) return;
+      try {
+        const res = await fetch(DATA_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error('Status ' + res.status);
+        const d = await res.json();
+        if (d.sensor) dunia.api.setSensor(d.sensor);
+        if (d.agen) {
+          Object.keys(d.agen).forEach(function (id) {
+            const a = d.agen[id] || {};
+            dunia.api.setStatusAgen(id, a.aktif !== false);
+            if (a.pesan) dunia.api.gelembung(id, a.pesan, 10);
+          });
+        }
+      } catch (err) {
+        dunia.api.setSensor({ online: false, keterangan: 'Data belum bisa dimuat' });
+      }
+    }
+    if (DATA_URL) {
+      document.getElementById('catatan-contoh').style.display = 'none';
+      muatData();
+      setInterval(muatData, JEDA_MUAT_DATA_MS);
+    }
+  </script>
+</body>
+</html>
