@@ -113,7 +113,7 @@
 
   <div class="catatan">
     <p>Geser untuk memutar, cubit untuk memperbesar. Ketuk layar di dinding office untuk membuka dashboard.</p>
-    <p class="versi">Versi 6 (area kerja, ruang meeting, ruang game, agent berwujud manusia)</p>
+    <p class="versi">Versi 7 (angka sensor dari Blynk)</p>
     <p class="contoh" id="catatan-contoh">Tampilan contoh: angka sensor dan status agent belum terhubung ke data asli. Petani dan agent yang berjalan hanya animasi.</p>
   </div>
 
@@ -126,7 +126,7 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     // Isi dengan alamat data asli (JSON) kalau sudah dihubungkan. Kosong = data contoh.
-    const DATA_URL = '';
+    const DATA_URL = 'https://script.google.com/macros/s/AKfycbzR4vUTumSrtlE97rfpeydbBcEzn9MYM42rQqycXov8NyQ3C3RaeOKwaTgIjLOgo94IwQ/exec';
     const DASHBOARD_URL = './';
     const JEDA_MUAT_DATA_MS = 120000;
 
@@ -301,7 +301,7 @@
           ['Suhu', fmt(d.suhu, 1) + ' °C', '#e8613a'],
           ['Kelembapan', fmt(d.kelembapan, 1) + ' %', '#57bfc0'],
           ['pH', fmt(d.ph, 1), '#a8d63f'],
-          ['TDS', fmt(d.tds, 0), '#b5bcc4']
+          ['TDS', fmt(d.tds, 1), '#b5bcc4']
         ];
         baris.forEach(function (b, i) {
           const y = 80 + i * 56;
@@ -1085,7 +1085,7 @@
     /* Logo di dinding office: memakai berkas logo-cocotani.png kalau ada di folder yang sama. */
     const berkasLogo = new Image();
     berkasLogo.onload = function () { dunia.api.setLogoGambar(berkasLogo); };
-    berkasLogo.src = 'logo-cocotani.png?v=6';
+    berkasLogo.src = 'logo-cocotani.png?v=7';
 
     /* Ketuk layar di dinding office untuk membuka dashboard */
     const raycaster = new THREE.Raycaster();
@@ -1134,7 +1134,9 @@
       }
     }
     if (DATA_URL) {
-      document.getElementById('catatan-contoh').style.display = 'none';
+      document.getElementById('catatan-contoh').textContent =
+        'Angka sensor di kebun dibaca dari Blynk dan diperbarui tiap 2 menit. Status agent masih contoh. Petani dan agent yang berjalan hanya animasi.';
+      dunia.api.setSensor({ online: false, suhu: null, kelembapan: null, ph: null, tds: null, keterangan: 'Memuat data Blynk' });
       muatData();
       setInterval(muatData, JEDA_MUAT_DATA_MS);
     }
