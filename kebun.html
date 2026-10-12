@@ -77,6 +77,7 @@
     }
     .catatan p { margin: 0; }
     .catatan .contoh { color: #d8b45a; }
+    .catatan .versi { color: #5f6f5b; }
 
     .pesan {
       position: fixed;
@@ -112,6 +113,7 @@
 
   <div class="catatan">
     <p>Geser untuk memutar, cubit untuk memperbesar. Ketuk layar di dinding office untuk membuka dashboard.</p>
+    <p class="versi">Versi 5 (papan sensor di sudut belakang, agent berjalan, logo di dinding)</p>
     <p class="contoh" id="catatan-contoh">Tampilan contoh: angka sensor dan status agent belum terhubung ke data asli. Petani dan agent yang berjalan hanya animasi.</p>
   </div>
 
@@ -809,7 +811,7 @@
     /* Logo di dinding office: memakai berkas logo-cocotani.png kalau ada di folder yang sama. */
     const berkasLogo = new Image();
     berkasLogo.onload = function () { dunia.api.setLogoGambar(berkasLogo); };
-    berkasLogo.src = 'logo-cocotani.png';
+    berkasLogo.src = 'logo-cocotani.png?v=5';
 
     /* Ketuk layar di dinding office untuk membuka dashboard */
     const raycaster = new THREE.Raycaster();
