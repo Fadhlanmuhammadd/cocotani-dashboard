@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani (v19)</title>
+  <title>Kebun dan office Cocotani (v21)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -146,7 +146,7 @@
       padding: 10px 12px;
     }
     .kartu-atas { display: flex; align-items: center; gap: 8px; }
-    .kartu .titik { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+    .kartu .titik, .agen-atas .titik { width: 10px; height: 10px; border-radius: 50%; flex: none; }
     .kartu h3 { margin: 0; font-size: 0.875rem; font-weight: 600; }
     .kartu .nama { margin: 2px 0 6px 18px; font-size: 0.75rem; color: var(--teks-redup); }
     .kartu p { margin: 0; font-size: 0.8125rem; line-height: 1.45; }
@@ -190,6 +190,9 @@
     .agen-tanya button:disabled { opacity: 0.6; cursor: default; }
     .agen-jawab { margin: 0; font-size: 0.875rem; line-height: 1.5; white-space: pre-wrap; max-height: 30vh; overflow-y: auto; }
     .agen-jawab:empty { display: none; }
+    .agen-pin { padding: 6px 9px; border: 1px solid var(--garis); border-radius: 6px; background: #0f1a12; color: var(--teks); font: inherit; font-size: 0.8125rem; }
+    .agen-pin[hidden] { display: none; }
+    .agen-catatan:empty { display: none; }
     .agen-catatan { margin: 0; font-size: 0.6875rem; color: var(--teks-redup); }
     .agen-aksi { display: flex; gap: 6px; margin-top: 2px; }
     .agen-aksi button {
@@ -410,7 +413,8 @@
       <button type="submit" id="agen-kirim">Tanya</button>
     </form>
     <p class="agen-jawab" id="agen-jawab" role="status"></p>
-    <p class="agen-catatan">Jawaban dari AI berdasarkan peran agent, belum memakai data terkini.</p>
+    <input class="agen-pin" id="agen-pin" type="password" autocomplete="off" placeholder="PIN untuk membuka data pribadi" aria-label="PIN data pribadi" hidden>
+    <p class="agen-catatan" id="agen-catatan"></p>
     <div class="agen-aksi">
       <button type="button" id="agen-ikut" aria-pressed="true">Ikuti</button>
       <button type="button" id="agen-tutup">Tutup</button>
@@ -3114,8 +3118,20 @@
       form: document.getElementById('agen-form'),
       q: document.getElementById('agen-q'),
       kirim: document.getElementById('agen-kirim'),
-      jawab: document.getElementById('agen-jawab')
+      jawab: document.getElementById('agen-jawab'),
+      pin: document.getElementById('agen-pin'),
+      catatan: document.getElementById('agen-catatan')
     };
+    const AGEN_BUTUH_PIN = ['pengingat'];
+    try { elAgen.pin.value = sessionStorage.getItem('cocotani-pin') || ''; } catch (err) { /* abaikan */ }
+    elAgen.pin.addEventListener('input', function () {
+      try { sessionStorage.setItem('cocotani-pin', elAgen.pin.value); } catch (err) { /* abaikan */ }
+    });
+    function catatanSumber(d) {
+      if (d.sumber === 'data') return 'Jawaban memakai data terkini' + (d.waktu ? ' (diambil ' + d.waktu + ' WITA).' : '.');
+      if (d.sumber === 'terkunci') return 'Data pribadi terkunci. Masukkan PIN di atas untuk membukanya.';
+      return 'Agent ini belum punya data terkini, jawaban berdasarkan perannya saja.';
+    }
     let urutanTanya = 0;
     function pesanGalatTanya(galat) {
       if (galat === 'belum_diatur') return 'Fitur tanya belum aktif: kunci Gemini belum dipasang di Apps Script.';
@@ -3128,6 +3144,7 @@
       urutanTanya++;
       elAgen.q.value = '';
       elAgen.jawab.textContent = '';
+      elAgen.catatan.textContent = '';
       elAgen.kirim.disabled = false;
     }
     async function tanyaAgen(e) {
@@ -3138,14 +3155,19 @@
       const urutan = ++urutanTanya;
       elAgen.kirim.disabled = true;
       elAgen.jawab.textContent = a.nama + ' sedang memikirkan jawabannya...';
+      elAgen.catatan.textContent = '';
+      const pin = AGEN_BUTUH_PIN.indexOf(a.id) >= 0 ? elAgen.pin.value : '';
       try {
-        const res = await fetch(DATA_URL + '?tanya=' + encodeURIComponent(q) + '&agen=' + encodeURIComponent(a.id), { cache: 'no-store' });
+        const res = await fetch(DATA_URL + '?tanya=' + encodeURIComponent(q) + '&agen=' + encodeURIComponent(a.id) + (pin ? '&pin=' + encodeURIComponent(pin) : ''), { cache: 'no-store' });
         if (!res.ok) throw new Error('http ' + res.status);
         const d = await res.json();
         if (urutan !== urutanTanya) return;
         const ok = d && d.ok && typeof d.jawaban === 'string';
         elAgen.jawab.textContent = ok ? d.jawaban : pesanGalatTanya(d && d.galat);
-        if (ok) elAgen.q.value = '';
+        if (ok) {
+          elAgen.q.value = '';
+          elAgen.catatan.textContent = catatanSumber(d);
+        }
       } catch (err) {
         if (urutan === urutanTanya) elAgen.jawab.textContent = pesanGalatTanya('gagal');
       } finally {
@@ -3190,6 +3212,7 @@
       agenDipilih = a;
       agenDiikuti = null;
       resetTanya();
+      elAgen.pin.hidden = AGEN_BUTUH_PIN.indexOf(id) < 0;
       isiKartuAgen(id);
       perbaruiStatusAgen();
       elAgen.kartu.hidden = false;
