@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani (v15)</title>
+  <title>Kebun dan office Cocotani (v16)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -162,6 +162,56 @@
     .chip.belum { color: #d8b45a; border-color: #d8b45a; }
     .chip.pemilik { color: #79b8ff; border-color: #79b8ff; }
 
+    .yt-latar {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      display: grid;
+      place-items: center;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.65);
+    }
+    .yt-latar[hidden] { display: none; }
+    .yt {
+      width: min(96vw, 760px);
+      max-height: 88vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      background: var(--latar);
+      border: 1px solid var(--garis);
+      border-radius: 12px;
+    }
+    .yt-kepala { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .yt-kepala h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+    .yt button, .yt-asli, #yt-asli {
+      padding: 7px 12px;
+      border: 1px solid var(--garis);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--teks);
+      font: inherit;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .yt button:hover, #yt-asli:hover { border-color: var(--hijau); }
+    .yt button:focus-visible, #yt-asli:focus-visible, .yt input:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
+    .yt-cari { display: flex; gap: 6px; }
+    .yt-cari input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--garis); border-radius: 6px; background: #0f1a12; color: var(--teks); font: inherit; font-size: 0.9375rem; }
+    .yt-cari button[type="submit"] { background: var(--hijau); border-color: var(--hijau); color: #000; font-weight: 600; }
+    .yt-pilihan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .yt-pilihan button[aria-pressed="true"] { border-color: var(--hijau); color: var(--hijau); font-weight: 600; }
+    #yt-asli { margin-left: auto; color: var(--teks-redup); }
+    .yt-status { margin: 0; min-height: 1.2em; font-size: 0.8125rem; line-height: 1.5; color: #d8b45a; }
+    .yt-daftar { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+    .yt-daftar button { width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 6px; text-align: left; border-radius: 8px; }
+    .yt-daftar img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 5px; background: #000; display: block; }
+    .yt-teks { display: block; font-size: 0.8125rem; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .yt-kanal { display: block; font-size: 0.75rem; color: var(--teks-redup); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .yt-live { align-self: flex-start; padding: 1px 6px; border-radius: 4px; background: #c0392b; color: #fff; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.04em; }
     .tv-wadah {
       position: absolute;
       left: 0;
@@ -307,6 +357,26 @@
     </div>
   </footer>
 
+  <div class="yt-latar" id="yt-latar" hidden>
+    <section class="yt" role="dialog" aria-modal="true" aria-labelledby="yt-judul">
+      <header class="yt-kepala">
+        <h2 id="yt-judul">YouTube</h2>
+        <button type="button" id="yt-tutup">Tutup</button>
+      </header>
+      <form class="yt-cari" id="yt-form">
+        <input id="yt-q" type="search" autocomplete="off" spellcheck="false" aria-label="Cari di YouTube" placeholder="Cari video atau live di YouTube">
+        <button type="submit">Cari</button>
+      </form>
+      <div class="yt-pilihan">
+        <button type="button" id="yt-populer" aria-pressed="true">Populer</button>
+        <button type="button" id="yt-live" aria-pressed="false">Live</button>
+        <a id="yt-asli" href="https://www.youtube.com/" target="_blank" rel="noopener">Buka YouTube asli</a>
+      </div>
+      <p class="yt-status" id="yt-status" role="status"></p>
+      <ul class="yt-daftar" id="yt-daftar"></ul>
+    </section>
+  </div>
+
   <section class="tv-bar" id="tv-bar" aria-label="Kontrol TV" hidden>
     <form class="tv-baris" id="tv-form">
       <input id="tv-masukan" type="text" inputmode="url" autocomplete="off" spellcheck="false" aria-label="Link YouTube atau ID kanal" placeholder="Tempel link YouTube, live, playlist, atau ID kanal (UC...)">
@@ -316,7 +386,8 @@
     <p class="tv-pesan" id="tv-pesan" role="status"></p>
     <div class="tv-terakhir" id="tv-terakhir"></div>
     <div class="tv-aksi">
-      <a class="tv-youtube" id="tv-youtube" href="https://www.youtube.com/" target="_blank" rel="noopener">Buka YouTube untuk memilih</a>
+      <button type="button" id="tv-cari">Cari di YouTube</button>
+      <a class="tv-youtube" id="tv-youtube" href="https://www.youtube.com/" target="_blank" rel="noopener">Buka YouTube asli</a>
       <button type="button" id="tv-matikan" hidden>Matikan TV</button>
       <button type="button" id="tv-keluar">Keluar TV</button>
     </div>
@@ -2595,7 +2666,8 @@
       terakhir: document.getElementById('tv-terakhir'),
       youtube: document.getElementById('tv-youtube'),
       matikan: document.getElementById('tv-matikan'),
-      keluar: document.getElementById('tv-keluar')
+      keluar: document.getElementById('tv-keluar'),
+      cari: document.getElementById('tv-cari')
     };
     const KUNCI_TV = 'cocotani-tv-terakhir';
     let sedangMemutar = null;
@@ -2631,11 +2703,11 @@
         elTv.terakhir.appendChild(b);
       });
     }
-    function catatTerakhirTv(p) {
+    function catatTerakhirTv(p, label) {
       const lama = muatTerakhirTv();
       const kunci = kunciTv(p);
       const ada = lama.filter(function (x) { return kunciTv(x) === kunci; })[0];
-      const baru = { tipe: p.tipe, id: p.id, list: p.list, kanal: p.kanal, label: (ada && ada.label) || '' };
+      const baru = { tipe: p.tipe, id: p.id, list: p.list, kanal: p.kanal, label: label ? String(label).slice(0, 60) : (ada && ada.label) || '' };
       simpanTerakhirTv([baru].concat(lama.filter(function (x) { return kunciTv(x) !== kunci; })).slice(0, 6));
       gambarTerakhirTv();
     }
@@ -2654,9 +2726,10 @@
         })
         .catch(function () { /* judul tidak tersedia: pakai label bawaan */ });
     }
-    function putarTv(p) {
+    function putarTv(p, label) {
       const src = urlEmbed(p);
       if (!src) return;
+      tutupYt();
       elTv.wadah.textContent = '';
       const f = document.createElement('iframe');
       f.src = src;
@@ -2672,8 +2745,8 @@
       sedangMemutar = p;
       perbaruiOverlayTv();
       dunia.api.setTv(true);
-      catatTerakhirTv(p);
-      ambilJudulTv(p);
+      catatTerakhirTv(p, label);
+      if (!label) ambilJudulTv(p);
     }
     function matikanTv() {
       elTv.wadah.textContent = '';
@@ -2695,18 +2768,126 @@
       putarTv(p);
     }
 
-    // Membuka YouTube di tab baru (di HP: aplikasi YouTube). Harus dipanggil langsung dari klik supaya tidak diblokir.
-    function bukaYoutubeBaru() {
-      dariYoutube = true;
-      const w = window.open('https://www.youtube.com/', '_blank');
-      if (w) {
-        try { w.opener = null; } catch (err) { /* abaikan */ }
-        elTv.pesan.textContent = 'YouTube terbuka di tab baru. Pilih videonya di sana, salin linknya (Bagikan, lalu Salin link), lalu kembali ke sini.';
-        return true;
-      }
-      elTv.pesan.textContent = 'Peramban memblokir jendela baru. Tekan "Buka YouTube untuk memilih".';
-      return false;
+    // Pop up YouTube: cari atau pilih video, lalu diputar di TV. Pencarian lewat Apps Script (kunci API tidak ada di halaman).
+    const elYt = {
+      latar: document.getElementById('yt-latar'),
+      tutup: document.getElementById('yt-tutup'),
+      form: document.getElementById('yt-form'),
+      q: document.getElementById('yt-q'),
+      populer: document.getElementById('yt-populer'),
+      live: document.getElementById('yt-live'),
+      asli: document.getElementById('yt-asli'),
+      status: document.getElementById('yt-status'),
+      daftar: document.getElementById('yt-daftar')
+    };
+    let ytTerbuka = false;
+    let ytLive = false;
+    let ytUrutan = 0;
+    function statusYt(teks) { elYt.status.textContent = teks; }
+    function setLiveYt(aktif) {
+      ytLive = aktif;
+      elYt.live.setAttribute('aria-pressed', String(aktif));
     }
+    function setPopulerYt(aktif) { elYt.populer.setAttribute('aria-pressed', String(aktif)); }
+    function pesanGalatYt(galat) {
+      if (galat === 'belum_diatur') return 'Pencarian di dalam halaman belum aktif karena kunci YouTube API belum dipasang di Apps Script. Sementara itu, tekan "Buka YouTube asli", salin link videonya, lalu kembali ke sini.';
+      if (galat === 'kuota') return 'Kuota pencarian YouTube hari ini habis. Coba lagi besok, atau tekan "Buka YouTube asli" dan salin linknya.';
+      return 'Pencarian gagal. Periksa koneksi, atau tekan "Buka YouTube asli" dan salin linknya.';
+    }
+    function gambarHasilYt(daftar) {
+      elYt.daftar.textContent = '';
+      daftar.forEach(function (h) {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        if (typeof h.gambar === 'string' && /^https:\/\/i\.ytimg\.com\//.test(h.gambar)) {
+          const img = document.createElement('img');
+          img.src = h.gambar;
+          img.alt = '';
+          img.loading = 'lazy';
+          b.appendChild(img);
+        }
+        if (h.live) {
+          const lencana = document.createElement('span');
+          lencana.className = 'yt-live';
+          lencana.textContent = 'LIVE';
+          b.appendChild(lencana);
+        }
+        const judul = document.createElement('span');
+        judul.className = 'yt-teks';
+        judul.textContent = String(h.judul || '');
+        b.appendChild(judul);
+        const kanal = document.createElement('span');
+        kanal.className = 'yt-kanal';
+        kanal.textContent = String(h.kanal || '');
+        b.appendChild(kanal);
+        b.addEventListener('click', function () { putarTv({ tipe: 'video', id: h.id }, h.judul); });
+        li.appendChild(b);
+        elYt.daftar.appendChild(li);
+      });
+    }
+    async function jalankanYt(param) {
+      const urutan = ++ytUrutan;
+      statusYt('Memuat...');
+      elYt.daftar.textContent = '';
+      try {
+        const res = await fetch(DATA_URL + '?' + param, { cache: 'no-store' });
+        if (!res.ok) throw new Error('http ' + res.status);
+        const d = await res.json();
+        if (urutan !== ytUrutan) return;
+        if (!d || !d.ok || !Array.isArray(d.hasil)) {
+          statusYt(pesanGalatYt(d && d.galat));
+          return;
+        }
+        const layak = d.hasil.filter(function (h) { return h && RE_VIDEO.test(h.id); });
+        if (!layak.length) {
+          statusYt('Tidak ada hasil yang bisa diputar di TV.');
+          return;
+        }
+        statusYt('');
+        gambarHasilYt(layak);
+      } catch (err) {
+        if (urutan === ytUrutan) statusYt(pesanGalatYt('gagal'));
+      }
+    }
+    function populerYt() {
+      setLiveYt(false);
+      setPopulerYt(true);
+      elYt.q.value = '';
+      return jalankanYt('populer=1');
+    }
+    function cariYt() {
+      const q = elYt.q.value.replace(/\s+/g, ' ').trim();
+      if (!q && !ytLive) {
+        statusYt('Ketik kata kunci, atau pilih Populer atau Live.');
+        return Promise.resolve();
+      }
+      setPopulerYt(false);
+      return jalankanYt('cari=' + encodeURIComponent(q) + (ytLive ? '&live=1' : ''));
+    }
+    function bukaPopupYt() {
+      elYt.latar.hidden = false;
+      ytTerbuka = true;
+      elYt.q.focus();
+      if (!elYt.daftar.children.length) populerYt();
+    }
+    function tutupYt() {
+      elYt.latar.hidden = true;
+      ytTerbuka = false;
+    }
+    elYt.form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      cariYt();
+    });
+    elYt.populer.addEventListener('click', populerYt);
+    elYt.live.addEventListener('click', function () {
+      setLiveYt(!ytLive);
+      if (!ytLive && !elYt.q.value.trim()) populerYt(); else cariYt();
+    });
+    elYt.asli.addEventListener('click', function () { dariYoutube = true; });
+    elYt.tutup.addEventListener('click', tutupYt);
+    elYt.latar.addEventListener('click', function (e) { if (e.target === elYt.latar) tutupYt(); });
+
     // Setelah kembali dari YouTube: putar link yang baru disalin, kalau ada.
     function cobaTempelOtomatis() {
       const sorot = function (pesan) {
@@ -2730,9 +2911,9 @@
       }).catch(function () { sorot(umum); });
     }
 
-    // Mode TV: YouTube dibuka di tab baru, kamera menghadap layar TV, video tampil di TV, bilah kontrol muncul.
+    // Mode TV: pop up YouTube terbuka, kamera menghadap layar TV, video yang dipilih tampil di TV, bilah kontrol muncul.
     function masukModeTv() {
-      bukaYoutubeBaru();
+      bukaPopupYt();
       hentikanTur();
       elTv.bar.hidden = false;
       if (!modeTv) {
@@ -2807,11 +2988,14 @@
         cobaTempelOtomatis();
       }
     });
+    elTv.cari.addEventListener('click', bukaPopupYt);
     elTv.matikan.addEventListener('click', matikanTv);
     elTv.keluar.addEventListener('click', keluarModeTv);
     document.getElementById('tombol-tv').addEventListener('click', masukModeTv);
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && modeTv) keluarModeTv();
+      if (e.key === 'Escape') {
+        if (ytTerbuka) tutupYt(); else if (modeTv) keluarModeTv();
+      }
     });
     // ==== TV END
 
