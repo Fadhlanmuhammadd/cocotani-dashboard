@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani (v14)</title>
+  <title>Kebun dan office Cocotani (v15)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -961,7 +961,7 @@
         ctx.fillStyle = '#8fa08b';
         ctx.font = '26px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(memutar ? 'Sedang memutar YouTube' : 'Ketuk untuk memutar YouTube', 270, 200);
+        ctx.fillText(memutar ? 'Sedang memutar YouTube' : 'Ketuk untuk membuka YouTube', 270, 200);
         ctx.textAlign = 'left';
       }
       gambarTv(false);
@@ -2602,6 +2602,7 @@
     let modeTv = false;
     let simpanKamera = null;
     let dariYoutube = false;
+    let klipTerakhir = '';
 
     function perbaruiOverlayTv() {
       if (!sedangMemutar) return;
@@ -2694,8 +2695,44 @@
       putarTv(p);
     }
 
-    // Mode TV: kamera menghadap layar TV, video tampil di TV, bilah kontrol muncul.
+    // Membuka YouTube di tab baru (di HP: aplikasi YouTube). Harus dipanggil langsung dari klik supaya tidak diblokir.
+    function bukaYoutubeBaru() {
+      dariYoutube = true;
+      const w = window.open('https://www.youtube.com/', '_blank');
+      if (w) {
+        try { w.opener = null; } catch (err) { /* abaikan */ }
+        elTv.pesan.textContent = 'YouTube terbuka di tab baru. Pilih videonya di sana, salin linknya (Bagikan, lalu Salin link), lalu kembali ke sini.';
+        return true;
+      }
+      elTv.pesan.textContent = 'Peramban memblokir jendela baru. Tekan "Buka YouTube untuk memilih".';
+      return false;
+    }
+    // Setelah kembali dari YouTube: putar link yang baru disalin, kalau ada.
+    function cobaTempelOtomatis() {
+      const sorot = function (pesan) {
+        elTv.tempel.classList.add('sorot');
+        elTv.pesan.textContent = pesan;
+      };
+      const umum = 'Sudah memilih video? Salin linknya di YouTube, lalu tekan Tempel.';
+      if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+        sorot(umum);
+        return;
+      }
+      navigator.clipboard.readText().then(function (teks) {
+        const p = uraiYoutube(teks);
+        if (p && p.tipe !== 'handle' && teks !== klipTerakhir) {
+          klipTerakhir = teks;
+          elTv.masukan.value = String(teks).trim();
+          putarTv(p);
+        } else {
+          sorot('Belum ada link YouTube baru yang disalin. Salin linknya di YouTube, lalu tekan Tempel.');
+        }
+      }).catch(function () { sorot(umum); });
+    }
+
+    // Mode TV: YouTube dibuka di tab baru, kamera menghadap layar TV, video tampil di TV, bilah kontrol muncul.
     function masukModeTv() {
+      bukaYoutubeBaru();
       hentikanTur();
       elTv.bar.hidden = false;
       if (!modeTv) {
@@ -2719,10 +2756,6 @@
       tweenKamera(new THREE.Vector3(c[0], c[1], c[2]), zoomTv, new THREE.Vector3(0, 5, 42));
       elTv.wadah.style.pointerEvents = 'auto';
       gambarTerakhirTv();
-      if (!sedangMemutar) {
-        const terakhir = muatTerakhirTv();
-        if (terakhir.length) putarTv(terakhir[0]); else elTv.masukan.focus();
-      }
     }
     // Melepas mode TV tanpa menggerakkan kamera; mengembalikan keadaan kamera sebelumnya.
     function lepasModeTv() {
@@ -2760,6 +2793,7 @@
       }
       navigator.clipboard.readText().then(function (teks) {
         elTv.masukan.value = teks;
+        klipTerakhir = teks;
         kirimMasukanTv();
       }).catch(function () {
         elTv.pesan.textContent = 'Izin tempel ditolak. Tekan Ctrl+V (Cmd+V di Mac) di kolom.';
@@ -2770,8 +2804,7 @@
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible' && dariYoutube && modeTv) {
         dariYoutube = false;
-        elTv.tempel.classList.add('sorot');
-        elTv.pesan.textContent = 'Sudah memilih video? Salin linknya di YouTube, lalu tekan Tempel.';
+        cobaTempelOtomatis();
       }
     });
     elTv.matikan.addEventListener('click', matikanTv);
