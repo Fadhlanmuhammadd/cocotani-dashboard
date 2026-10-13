@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani (v13)</title>
+  <title>Kebun dan office Cocotani (v14)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -63,6 +63,7 @@
       position: fixed;
       inset: calc(var(--tinggi-bar) + var(--tinggi-nav)) 0 var(--tinggi-footer) 0;
       touch-action: none;
+      overflow: hidden;
     }
     #kanvas canvas { display: block; }
 
@@ -161,28 +162,40 @@
     .chip.belum { color: #d8b45a; border-color: #d8b45a; }
     .chip.pemilik { color: #79b8ff; border-color: #79b8ff; }
 
-    .tv {
+    .tv-wadah {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 960px;
+      height: 518px;
+      z-index: 2;
+      transform-origin: 0 0;
+      background: #000;
+      pointer-events: none;
+    }
+    .tv-wadah[hidden] { display: none; }
+    .tv-wadah iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .tv-bar {
       position: fixed;
-      top: calc(var(--tinggi-bar) + var(--tinggi-nav) + 12px);
-      right: 16px;
-      z-index: 6;
-      width: min(94vw, 600px);
-      max-height: calc(100vh - var(--tinggi-bar) - var(--tinggi-nav) - 24px);
-      overflow-y: auto;
+      left: 50%;
+      bottom: calc(var(--tinggi-footer) + 12px);
+      transform: translateX(-50%);
+      z-index: 5;
+      width: min(94vw, 760px);
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      padding: 12px;
-      background: var(--latar);
+      gap: 8px;
+      padding: 10px 12px;
+      background: rgba(10, 17, 11, 0.94);
       border: 1px solid var(--garis);
       border-radius: 10px;
     }
-    .tv[hidden] { display: none; }
-    .tv-kepala { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .tv-kepala h2 { margin: 0; font-size: 0.9375rem; font-weight: 600; }
-    .tv-aksi { display: flex; gap: 6px; }
-    .tv button, .tv-buka {
-      padding: 6px 12px;
+    .tv-bar[hidden] { display: none; }
+    .tv-baris { display: flex; gap: 6px; }
+    .tv-baris input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid var(--garis); border-radius: 6px; background: #0f1a12; color: var(--teks); font: inherit; font-size: 0.875rem; }
+    .tv-bar button, .tv-youtube {
+      flex: none;
+      padding: 7px 12px;
       border: 1px solid var(--garis);
       border-radius: 6px;
       background: transparent;
@@ -192,22 +205,17 @@
       cursor: pointer;
       text-decoration: none;
     }
-    .tv button:hover, .tv-buka:hover { border-color: var(--hijau); }
-    .tv button:focus-visible, .tv-buka:focus-visible, .tv input:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
-    .tv-layar { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: 6px; overflow: hidden; }
-    .tv-layar iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
-    .tv-kosong { margin: 0; padding: 16px; display: grid; place-content: center; height: 100%; text-align: center; color: var(--teks-redup); font-size: 0.8125rem; line-height: 1.5; }
-    .tv-form label { display: block; margin-bottom: 4px; font-size: 0.75rem; color: var(--teks-redup); }
-    .tv-baris { display: flex; gap: 6px; }
-    .tv-baris input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--garis); border-radius: 6px; background: #0f1a12; color: var(--teks); font: inherit; font-size: 0.875rem; }
-    .tv-baris button { flex: none; background: var(--hijau); border-color: var(--hijau); color: #000; font-weight: 600; }
-    .tv-pesan { margin: 6px 0 0; min-height: 1.2em; font-size: 0.8125rem; color: #d8b45a; }
+    .tv-bar button:hover, .tv-youtube:hover { border-color: var(--hijau); }
+    .tv-bar button:focus-visible, .tv-youtube:focus-visible, .tv-bar input:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
+    .tv-baris button[type="submit"] { background: var(--hijau); border-color: var(--hijau); color: #000; font-weight: 600; }
+    .tv-baris button.sorot { border-color: var(--hijau); color: var(--hijau); font-weight: 600; }
+    .tv-pesan { margin: 0; min-height: 1.2em; font-size: 0.8125rem; color: #d8b45a; }
     .tv-terakhir { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tv-terakhir:empty { display: none; }
     .tv-terakhir button { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .tv-buka { align-self: flex-start; color: var(--hijau); border-color: var(--hijau); }
-    .tv-catatan { margin: 0; font-size: 0.75rem; line-height: 1.5; color: var(--teks-redup); }
-    .tv.kecil { width: min(94vw, 300px); padding: 8px; gap: 6px; }
-    .tv.kecil .tv-form, .tv.kecil .tv-terakhir, .tv.kecil .tv-catatan, .tv.kecil .tv-buka { display: none; }
+    .tv-aksi { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tv-youtube { color: var(--hijau); border-color: var(--hijau); }
+    .tv-aksi #tv-keluar { margin-left: auto; }
 
     .pesan {
       position: fixed;
@@ -263,7 +271,7 @@
     <span class="waktu" id="waktu-sholat"></span>
   </nav>
 
-  <div id="kanvas" aria-label="Tampilan 3D kebun hidroponik dan office agent"></div>
+  <div id="kanvas" aria-label="Tampilan 3D kebun hidroponik dan office agent"><div class="tv-wadah" id="tv-wadah" hidden></div></div>
 
   <footer class="jobdesk" id="jobdesk">
     <div class="jobdesk-kepala">
@@ -299,26 +307,19 @@
     </div>
   </footer>
 
-  <section class="tv" id="tv" role="dialog" aria-label="TV ruang meeting" hidden>
-    <div class="tv-kepala">
-      <h2>TV ruang meeting</h2>
-      <div class="tv-aksi">
-        <button type="button" id="tv-kecil" aria-pressed="false">Perkecil</button>
-        <button type="button" id="tv-tutup">Tutup</button>
-      </div>
-    </div>
-    <div class="tv-layar" id="tv-layar"><p class="tv-kosong">Tempel link video, live, atau playlist YouTube, lalu tekan Putar.</p></div>
-    <form class="tv-form" id="tv-form">
-      <label for="tv-masukan">Link YouTube atau ID kanal</label>
-      <div class="tv-baris">
-        <input id="tv-masukan" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="youtube.com/live/... atau UC...">
-        <button type="submit">Putar</button>
-      </div>
-      <p class="tv-pesan" id="tv-pesan" role="status"></p>
+  <section class="tv-bar" id="tv-bar" aria-label="Kontrol TV" hidden>
+    <form class="tv-baris" id="tv-form">
+      <input id="tv-masukan" type="text" inputmode="url" autocomplete="off" spellcheck="false" aria-label="Link YouTube atau ID kanal" placeholder="Tempel link YouTube, live, playlist, atau ID kanal (UC...)">
+      <button type="submit">Putar</button>
+      <button type="button" id="tv-tempel">Tempel</button>
     </form>
+    <p class="tv-pesan" id="tv-pesan" role="status"></p>
     <div class="tv-terakhir" id="tv-terakhir"></div>
-    <a class="tv-buka" id="tv-buka" target="_blank" rel="noopener" hidden>Buka di YouTube</a>
-    <p class="tv-catatan">Untuk live, pakai link video live (youtube.com/live/... atau watch?v=...) atau ID kanal yang diawali UC, yang akan memutar siaran live kanal itu kalau sedang berlangsung. Kalau video tidak muncul, pemiliknya mungkin melarang pemutaran di situs lain.</p>
+    <div class="tv-aksi">
+      <a class="tv-youtube" id="tv-youtube" href="https://www.youtube.com/" target="_blank" rel="noopener">Buka YouTube untuk memilih</a>
+      <button type="button" id="tv-matikan" hidden>Matikan TV</button>
+      <button type="button" id="tv-keluar">Keluar TV</button>
+    </div>
   </section>
 
   <div class="pesan" id="pesan">
@@ -970,6 +971,8 @@
       layarTv.position.set(23.4, 3.2, -7.45);
       scene.add(layarTv);
       info.tv = layarTv;
+      info.tvPusat = [23.4, 3.2, -7.45];
+      info.tvUkuran = [5.0, 2.7];
       klikTarget.push(layarTv);
       api.setTv = function (memutar) {
         gambarTv(!!memutar);
@@ -2289,19 +2292,34 @@
     function tandaiFokus(nama) {
       tombolFokus.forEach(function (b) { b.classList.toggle('aktif', b.getAttribute('data-fokus') === nama); });
     }
+    const offsetTmp = new THREE.Vector3();
+    // Menggerakkan kamera ke target, zoom, dan arah pandang baru (offsetKe kosong = arah pandang sekarang).
+    function tweenKamera(target, zoom, offsetKe, selesai) {
+      const offsetSkrg = kamera.position.clone().sub(kontrol.target);
+      tween = {
+        mulai: performance.now(),
+        durasi: 1100,
+        offsetDari: offsetSkrg,
+        offsetKe: offsetKe ? offsetKe.clone() : offsetSkrg.clone(),
+        dariTarget: kontrol.target.clone(),
+        keTarget: target.clone(),
+        dariZoom: kamera.zoom,
+        keZoom: zoom,
+        selesai: selesai || null
+      };
+    }
     function pindahFokus(nama) {
       const f = fokus[nama];
       if (!f) return;
       tandaiFokus(nama);
-      tween = {
-        mulai: performance.now(),
-        durasi: 1100,
-        offset: kamera.position.clone().sub(kontrol.target),
-        dariTarget: kontrol.target.clone(),
-        keTarget: new THREE.Vector3(f.x, f.y, f.z),
-        dariZoom: kamera.zoom,
-        keZoom: f.zoom
-      };
+      let offsetKe = null;
+      let selesai = null;
+      if (modeTv) {
+        const simpan = lepasModeTv();
+        offsetKe = simpan.offset;
+        selesai = pulihkanBatasKamera;
+      }
+      tweenKamera(new THREE.Vector3(f.x, f.y, f.z), f.zoom, offsetKe, selesai);
     }
     function jalankanTween() {
       if (!tween) return;
@@ -2309,9 +2327,14 @@
       const e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
       kontrol.target.lerpVectors(tween.dariTarget, tween.keTarget, e);
       kamera.zoom = tween.dariZoom + (tween.keZoom - tween.dariZoom) * e;
-      kamera.position.copy(kontrol.target).add(tween.offset);
+      offsetTmp.lerpVectors(tween.offsetDari, tween.offsetKe, e);
+      kamera.position.copy(kontrol.target).add(offsetTmp);
       kamera.updateProjectionMatrix();
-      if (t >= 1) tween = null;
+      if (t >= 1) {
+        const sel = tween.selesai;
+        tween = null;
+        if (sel) sel();
+      }
     }
     const tombolTur = document.getElementById('tombol-tur');
     function hentikanTur() {
@@ -2361,6 +2384,7 @@
       a.remove();
     });
     renderer.domElement.addEventListener('pointerdown', function () {
+      if (modeTv) return;
       tween = null;
       hentikanTur();
     });
@@ -2447,6 +2471,8 @@
       });
       jalankanTween();
       kontrol.update();
+      kamera.updateMatrixWorld();
+      perbaruiOverlayTv();
       renderer.render(dunia.scene, kamera);
     });
 
@@ -2455,7 +2481,7 @@
     berkasLogo.onload = function () { dunia.api.setLogoGambar(berkasLogo); };
     berkasLogo.src = 'logo-cocotani.png?v=8';
 
-    /* TV ruang meeting: memutar video, live, atau playlist YouTube */
+    /* TV ruang meeting: video YouTube tampil di layar TV 3D. Ketuk TV untuk masuk mode TV. */
     // ==== TV START
     const RE_VIDEO = /^[A-Za-z0-9_-]{11}$/;
     const RE_LIST = /^[A-Za-z0-9_-]{10,64}$/;
@@ -2527,21 +2553,61 @@
       return null;
     }
 
+    // Layar TV di dunia 3D: iframe di atas kanvas, diubah bentuknya mengikuti empat sudut layar TV.
+    const TV_LEBAR = 960;
+    const TV_TINGGI = 518;
+    const sudutTv = (function () {
+      const c = dunia.info.tvPusat;
+      const u = dunia.info.tvUkuran;
+      return [
+        [c[0] - u[0] / 2, c[1] + u[1] / 2, c[2]],
+        [c[0] + u[0] / 2, c[1] + u[1] / 2, c[2]],
+        [c[0] - u[0] / 2, c[1] - u[1] / 2, c[2]]
+      ];
+    })();
+    // Kamera ortografis: proyeksinya linear, jadi tiga sudut cukup untuk menentukan matriks CSS.
+    function matriksTv(kam, lebar, tinggi) {
+      const t = sudutTv.map(function (c) {
+        const v = new THREE.Vector3(c[0], c[1], c[2]).project(kam);
+        return { x: (v.x * 0.5 + 0.5) * lebar, y: (-v.y * 0.5 + 0.5) * tinggi };
+      });
+      return {
+        a: (t[1].x - t[0].x) / TV_LEBAR, b: (t[1].y - t[0].y) / TV_LEBAR,
+        c: (t[2].x - t[0].x) / TV_TINGGI, d: (t[2].y - t[0].y) / TV_TINGGI,
+        e: t[0].x, f: t[0].y
+      };
+    }
+    // Zoom supaya layar TV mengisi sekitar 62% lebar (dan tidak lebih dari 60% tinggi) area tampilan.
+    function zoomUntukTv(kam, lebar, tinggi) {
+      const tinggiPandang = kam.top - kam.bottom;
+      const lebarTv = dunia.info.tvUkuran[0];
+      const tinggiTv = dunia.info.tvUkuran[1];
+      return Math.min(0.62 * lebar * tinggiPandang / (lebarTv * tinggi), 0.6 * tinggiPandang / tinggiTv);
+    }
+
     const elTv = {
-      panel: document.getElementById('tv'),
-      layar: document.getElementById('tv-layar'),
+      wadah: document.getElementById('tv-wadah'),
+      bar: document.getElementById('tv-bar'),
       form: document.getElementById('tv-form'),
       masukan: document.getElementById('tv-masukan'),
+      tempel: document.getElementById('tv-tempel'),
       pesan: document.getElementById('tv-pesan'),
       terakhir: document.getElementById('tv-terakhir'),
-      buka: document.getElementById('tv-buka'),
-      kecil: document.getElementById('tv-kecil'),
-      tutup: document.getElementById('tv-tutup')
+      youtube: document.getElementById('tv-youtube'),
+      matikan: document.getElementById('tv-matikan'),
+      keluar: document.getElementById('tv-keluar')
     };
     const KUNCI_TV = 'cocotani-tv-terakhir';
     let sedangMemutar = null;
-    let kosongTv = elTv.layar.firstElementChild || null;
+    let modeTv = false;
+    let simpanKamera = null;
+    let dariYoutube = false;
 
+    function perbaruiOverlayTv() {
+      if (!sedangMemutar) return;
+      const m = matriksTv(kamera, wadah.clientWidth, wadah.clientHeight);
+      elTv.wadah.style.transform = 'matrix(' + [m.a, m.b, m.c, m.d, m.e, m.f].map(function (n) { return n.toFixed(5); }).join(',') + ')';
+    }
     function muatTerakhirTv() {
       try {
         const data = JSON.parse(localStorage.getItem(KUNCI_TV) || '[]');
@@ -2590,49 +2656,32 @@
     function putarTv(p) {
       const src = urlEmbed(p);
       if (!src) return;
-      elTv.layar.textContent = '';
+      elTv.wadah.textContent = '';
       const f = document.createElement('iframe');
       f.src = src;
-      f.title = 'Pemutar YouTube';
+      f.title = 'Pemutar YouTube di TV';
       f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
       f.setAttribute('allowfullscreen', '');
       f.referrerPolicy = 'strict-origin-when-cross-origin';
-      elTv.layar.appendChild(f);
-      elTv.buka.href = urlTonton(p);
-      elTv.buka.hidden = false;
+      elTv.wadah.appendChild(f);
+      elTv.wadah.hidden = false;
+      elTv.matikan.hidden = false;
       elTv.pesan.textContent = '';
+      elTv.tempel.classList.remove('sorot');
       sedangMemutar = p;
+      perbaruiOverlayTv();
       dunia.api.setTv(true);
       catatTerakhirTv(p);
       ambilJudulTv(p);
     }
-    function hentikanTv() {
-      elTv.layar.textContent = '';
-      if (kosongTv) elTv.layar.appendChild(kosongTv);
-      elTv.buka.hidden = true;
+    function matikanTv() {
+      elTv.wadah.textContent = '';
+      elTv.wadah.hidden = true;
+      elTv.matikan.hidden = true;
       sedangMemutar = null;
       dunia.api.setTv(false);
     }
-    function perkecilTv(kecil) {
-      elTv.panel.classList.toggle('kecil', kecil);
-      elTv.kecil.textContent = kecil ? 'Perbesar' : 'Perkecil';
-      elTv.kecil.setAttribute('aria-pressed', String(kecil));
-    }
-    function bukaTv() {
-      elTv.panel.hidden = false;
-      perkecilTv(false);
-      gambarTerakhirTv();
-      hentikanTur();
-      pindahFokus('meeting');
-      elTv.masukan.focus();
-    }
-    function tutupTv() {
-      hentikanTv();
-      elTv.panel.hidden = true;
-      elTv.pesan.textContent = '';
-    }
-    elTv.form.addEventListener('submit', function (e) {
-      e.preventDefault();
+    function kirimMasukanTv() {
       const p = uraiYoutube(elTv.masukan.value);
       if (!p) {
         elTv.pesan.textContent = 'Link belum dikenali. Tempel link YouTube (video, live, atau playlist) atau ID kanal yang diawali UC.';
@@ -2643,13 +2692,93 @@
         return;
       }
       putarTv(p);
+    }
+
+    // Mode TV: kamera menghadap layar TV, video tampil di TV, bilah kontrol muncul.
+    function masukModeTv() {
+      hentikanTur();
+      elTv.bar.hidden = false;
+      if (!modeTv) {
+        modeTv = true;
+        simpanKamera = {
+          target: kontrol.target.clone(),
+          offset: kamera.position.clone().sub(kontrol.target),
+          zoom: kamera.zoom,
+          batas: [kontrol.minAzimuthAngle, kontrol.maxAzimuthAngle, kontrol.minPolarAngle, kontrol.maxPolarAngle, kontrol.maxZoom]
+        };
+        kontrol.minAzimuthAngle = -0.2;
+        kontrol.maxAzimuthAngle = 1.4;
+        kontrol.minPolarAngle = 0.3;
+        kontrol.maxPolarAngle = 1.55;
+        kontrol.enabled = false;
+        tandaiFokus('');
+      }
+      const c = dunia.info.tvPusat;
+      const zoomTv = zoomUntukTv(kamera, wadah.clientWidth, wadah.clientHeight);
+      kontrol.maxZoom = Math.max(kontrol.maxZoom, zoomTv * 1.1);
+      tweenKamera(new THREE.Vector3(c[0], c[1], c[2]), zoomTv, new THREE.Vector3(0, 5, 42));
+      elTv.wadah.style.pointerEvents = 'auto';
+      gambarTerakhirTv();
+      if (!sedangMemutar) {
+        const terakhir = muatTerakhirTv();
+        if (terakhir.length) putarTv(terakhir[0]); else elTv.masukan.focus();
+      }
+    }
+    // Melepas mode TV tanpa menggerakkan kamera; mengembalikan keadaan kamera sebelumnya.
+    function lepasModeTv() {
+      modeTv = false;
+      kontrol.enabled = true;
+      elTv.bar.hidden = true;
+      elTv.wadah.style.pointerEvents = 'none';
+      elTv.pesan.textContent = '';
+      elTv.tempel.classList.remove('sorot');
+      return simpanKamera;
+    }
+    function pulihkanBatasKamera() {
+      if (!simpanKamera) return;
+      kontrol.minAzimuthAngle = simpanKamera.batas[0];
+      kontrol.maxAzimuthAngle = simpanKamera.batas[1];
+      kontrol.minPolarAngle = simpanKamera.batas[2];
+      kontrol.maxPolarAngle = simpanKamera.batas[3];
+      kontrol.maxZoom = simpanKamera.batas[4];
+    }
+    function keluarModeTv() {
+      if (!modeTv) return;
+      const s = lepasModeTv();
+      tweenKamera(s.target, s.zoom, s.offset, pulihkanBatasKamera);
+    }
+
+    elTv.form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      kirimMasukanTv();
     });
-    elTv.kecil.addEventListener('click', function () { perkecilTv(!elTv.panel.classList.contains('kecil')); });
-    elTv.tutup.addEventListener('click', tutupTv);
-    document.getElementById('tombol-tv').addEventListener('click', bukaTv);
+    elTv.tempel.addEventListener('click', function () {
+      if (!navigator.clipboard || typeof navigator.clipboard.readText !== 'function') {
+        elTv.pesan.textContent = 'Peramban ini belum mengizinkan tempel otomatis. Tekan Ctrl+V (Cmd+V di Mac) di kolom.';
+        elTv.masukan.focus();
+        return;
+      }
+      navigator.clipboard.readText().then(function (teks) {
+        elTv.masukan.value = teks;
+        kirimMasukanTv();
+      }).catch(function () {
+        elTv.pesan.textContent = 'Izin tempel ditolak. Tekan Ctrl+V (Cmd+V di Mac) di kolom.';
+        elTv.masukan.focus();
+      });
+    });
+    elTv.youtube.addEventListener('click', function () { dariYoutube = true; });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && dariYoutube && modeTv) {
+        dariYoutube = false;
+        elTv.tempel.classList.add('sorot');
+        elTv.pesan.textContent = 'Sudah memilih video? Salin linknya di YouTube, lalu tekan Tempel.';
+      }
+    });
+    elTv.matikan.addEventListener('click', matikanTv);
+    elTv.keluar.addEventListener('click', keluarModeTv);
+    document.getElementById('tombol-tv').addEventListener('click', masukModeTv);
     document.addEventListener('keydown', function (e) {
-      if (e.key !== 'Escape' || elTv.panel.hidden) return;
-      if (sedangMemutar) perkecilTv(true); else tutupTv();
+      if (e.key === 'Escape' && modeTv) keluarModeTv();
     });
     // ==== TV END
 
@@ -2674,7 +2803,7 @@
       awal = null;
       const sasaran = targetDiBawah(e);
       if (geser < 6 && sasaran) {
-        if (sasaran === dunia.info.tv) bukaTv(); else window.location.href = DASHBOARD_URL;
+        if (sasaran === dunia.info.tv) masukModeTv(); else window.location.href = DASHBOARD_URL;
       }
     });
     renderer.domElement.addEventListener('pointermove', function (e) {
