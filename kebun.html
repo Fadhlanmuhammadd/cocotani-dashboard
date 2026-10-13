@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani (v16)</title>
+  <title>Kebun dan office Cocotani (v17)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -162,6 +162,40 @@
     .chip.belum { color: #d8b45a; border-color: #d8b45a; }
     .chip.pemilik { color: #79b8ff; border-color: #79b8ff; }
 
+    .agen-kartu {
+      position: fixed;
+      left: 16px;
+      bottom: calc(var(--tinggi-footer) + 12px);
+      z-index: 4;
+      width: min(92vw, 340px);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 12px 14px;
+      background: rgba(10, 17, 11, 0.94);
+      border: 1px solid var(--garis);
+      border-radius: 10px;
+    }
+    .agen-kartu[hidden] { display: none; }
+    .agen-atas { display: flex; align-items: center; gap: 8px; }
+    .agen-atas h2 { margin: 0; font-size: 0.9375rem; font-weight: 600; flex: 1; }
+    .agen-nama { font-size: 0.75rem; color: var(--teks-redup); }
+    .agen-status { margin: 0; font-size: 0.875rem; line-height: 1.4; color: var(--hijau); }
+    .agen-tugas { margin: 0; font-size: 0.8125rem; line-height: 1.5; color: var(--teks-redup); }
+    .agen-aksi { display: flex; gap: 6px; margin-top: 2px; }
+    .agen-aksi button {
+      padding: 6px 12px;
+      border: 1px solid var(--garis);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--teks);
+      font: inherit;
+      font-size: 0.8125rem;
+      cursor: pointer;
+    }
+    .agen-aksi button:hover { border-color: var(--hijau); }
+    .agen-aksi button:focus-visible { outline: 2px solid var(--teks); outline-offset: 2px; }
+    .agen-aksi button[aria-pressed="true"] { border-color: var(--hijau); color: var(--hijau); }
     .yt-latar {
       position: fixed;
       inset: 0;
@@ -329,33 +363,44 @@
       <button type="button" id="tombol-jobdesk" aria-expanded="false" aria-controls="isi-jobdesk">Tampilkan</button>
     </div>
     <div class="jobdesk-isi" id="isi-jobdesk">
-      <article class="kartu">
+      <article class="kartu" data-agen="pengingat">
         <div class="kartu-atas"><span class="titik" style="background:#2f9e8f"></span><h3>Schedule Master</h3><span class="chip aktif">Aktif</span></div>
         <div class="nama">Agent pengingat</div>
         <p>Mengingatkan token listrik, PDAM, kuota CCTV, kuota petani, dan kuras tandon lewat Telegram. Mencatat pemakaian token.</p>
       </article>
-      <article class="kartu">
+      <article class="kartu" data-agen="cuaca">
         <div class="kartu-atas"><span class="titik" style="background:#3b82c4"></span><h3>Climate Analyst</h3><span class="chip aktif">Aktif</span></div>
         <div class="nama">Agent cuaca</div>
         <p>Membaca prakiraan BMKG tiap hari jam 10.00 WITA dan memberi peringatan kalau ada hujan lebat atau petir.</p>
       </article>
-      <article class="kartu">
+      <article class="kartu" data-agen="riset">
         <div class="kartu-atas"><span class="titik" style="background:#7c6bd6"></span><h3>Growth Strategist</h3><span class="chip belum">Belum dibuat</span></div>
         <div class="nama">Agent riset sosmed</div>
         <p>Meriset akun hidroponik lain di Instagram dan TikTok, lalu menyarankan ide konten dan jadwal posting.</p>
       </article>
-      <article class="kartu">
+      <article class="kartu" data-agen="owner">
         <div class="kartu-atas"><span class="titik" style="background:#16213a;box-shadow:0 0 0 1px #5b6b8f"></span><h3>Founder &amp; CEO</h3><span class="chip pemilik">Pemilik</span></div>
         <div class="nama">Peran pemilik Cocotani</div>
         <p>Mengambil keputusan, menerima laporan semua agent di Telegram, dan menyetujui apa yang akan diposting.</p>
       </article>
-      <article class="kartu">
+      <article class="kartu" data-agen="operasional">
         <div class="kartu-atas"><span class="titik" style="background:#f2845c"></span><h3>Cashflow Controller</h3><span class="chip belum">Belum dibuat</span></div>
         <div class="nama">Agent operasional</div>
         <p>Mencatat pemasukan dan pengeluaran ke spreadsheet keuangan setelah dikonfirmasi pemilik. Tanpa akses transfer.</p>
       </article>
     </div>
   </footer>
+
+  <aside class="agen-kartu" id="agen-kartu" aria-label="Info agent" hidden>
+    <div class="agen-atas"><span class="titik" id="agen-titik"></span><h2 id="agen-jabatan"></h2><span class="chip" id="agen-chip"></span></div>
+    <div class="agen-nama" id="agen-nama"></div>
+    <p class="agen-status" id="agen-status"></p>
+    <p class="agen-tugas" id="agen-tugas"></p>
+    <div class="agen-aksi">
+      <button type="button" id="agen-ikut" aria-pressed="true">Ikuti</button>
+      <button type="button" id="agen-tutup">Tutup</button>
+    </div>
+  </aside>
 
   <div class="yt-latar" id="yt-latar" hidden>
     <section class="yt" role="dialog" aria-modal="true" aria-labelledby="yt-judul">
@@ -2058,6 +2103,21 @@
       jalankanPetani(petaniB, 'petaniB', MINAT.petaniB, 'K2b');
       jalankanPetani(petaniC, 'petaniC', MINAT.petaniC, 'K3a');
 
+      info.hitAgen = [];
+      // Nama ruangan untuk sebuah titik, dipakai untuk menjelaskan posisi agent.
+      function zonaDi(x, z) {
+        if (x < -2) return 'kebun';
+        if (x < 3.4) return 'jembatan menuju kebun';
+        if (x >= 35) {
+          if (z < 2) return 'musholla';
+          if (z < 6) return 'lorong office';
+          return 'ruang founder';
+        }
+        if (z < 2) return x < 11.4 ? 'command center' : x < 19.4 ? 'area kerja' : x < 27.4 ? 'ruang meeting' : 'studio konten';
+        if (z < 6) return 'jalan tengah';
+        return x < 11.4 ? 'lobi' : x < 19.4 ? 'pantry kafe' : x < 27.4 ? 'tribun santai' : 'ruang game';
+      }
+      info.zonaDi = zonaDi;
       function bikinAgen(id, nama, opsi, rumahId) {
         const orang = bikinManusia(opsi);
         scene.add(orang.grup);
@@ -2084,6 +2144,13 @@
         sg.sprite.position.set(x, 6.4 + orang.grup.position.y, z);
         sg.sprite.visible = false;
         scene.add(sg.sprite);
+
+        // area klik yang lebih lebar daripada badan agent (tidak terlihat)
+        const area = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 4.2, 8), new THREE.MeshBasicMaterial({ visible: false }));
+        area.position.y = 2.1;
+        area.userData.agenId = id;
+        orang.grup.add(area);
+        info.hitAgen.push(area);
 
         const agen = Object.assign(orang, {
           id: id, nama: nama, rumah: rumahId, simpul: stRumah.simpul,
@@ -2159,6 +2226,19 @@
           }
           return false;
         }
+        // Teks singkat tentang apa yang sedang dilakukan agent (hanya dari animasi, bukan data nyata)
+        a.statusTeks = function () {
+          if (a.tahapSholat === 'wudhu') return keadaan === 'jalan' ? 'menuju tempat wudhu' : 'sedang berwudhu';
+          if (a.tahapSholat === 'sholat') return keadaan === 'jalan' ? 'menuju sajadahnya untuk sholat' : 'sedang sholat';
+          if (a.perluSholat) return 'bersiap untuk sholat';
+          if (keadaan === 'jalan') return tujuan ? 'berjalan menuju ' + zonaDi(N[tujuan.simpul][0], N[tujuan.simpul][1]) : 'berjalan';
+          const zona = zonaDi(a.grup.position.x, a.grup.position.z);
+          if (sekarang.aktivitas === 'lihat') return 'mengecek tanaman di kebun';
+          if (sekarang.aktivitas === 'sensor') return 'melihat papan sensor di kebun';
+          if (sekarang.aktivitas === 'tandon') return 'mengecek tandon di kebun';
+          if (sekarang.id === a.rumah) return 'bekerja di mejanya (' + zona + ')';
+          return (sekarang.tipe === 'duduk' ? 'duduk di ' : 'berada di ') + zona;
+        };
         function selesaiSholat() {
           a.pasangIbadah(false);
           a.perluSholat = false;
@@ -2382,6 +2462,7 @@
     function pindahFokus(nama) {
       const f = fokus[nama];
       if (!f) return;
+      if (typeof tutupAgen === 'function') tutupAgen();
       tandaiFokus(nama);
       let offsetKe = null;
       let selesai = null;
@@ -2541,6 +2622,7 @@
         fn(dt, t);
       });
       jalankanTween();
+      perbaruiAgenFrame(dt);
       kontrol.update();
       kamera.updateMatrixWorld();
       perbaruiOverlayTv();
@@ -2913,6 +2995,7 @@
 
     // Mode TV: pop up YouTube terbuka, kamera menghadap layar TV, video yang dipilih tampil di TV, bilah kontrol muncul.
     function masukModeTv() {
+      if (typeof tutupAgen === 'function') tutupAgen();
       bukaPopupYt();
       hentikanTur();
       elTv.bar.hidden = false;
@@ -2994,10 +3077,98 @@
     document.getElementById('tombol-tv').addEventListener('click', masukModeTv);
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') {
-        if (ytTerbuka) tutupYt(); else if (modeTv) keluarModeTv();
+        if (ytTerbuka) tutupYt();
+        else if (modeTv) keluarModeTv();
+        else if (typeof agenDipilih !== 'undefined' && agenDipilih) tutupAgen();
       }
     });
     // ==== TV END
+
+    /* Klik agent: kamera mendekat, kartu info tampil, kamera mengikuti agent */
+    // ==== AGEN START
+    const elAgen = {
+      kartu: document.getElementById('agen-kartu'),
+      titik: document.getElementById('agen-titik'),
+      jabatan: document.getElementById('agen-jabatan'),
+      chip: document.getElementById('agen-chip'),
+      nama: document.getElementById('agen-nama'),
+      status: document.getElementById('agen-status'),
+      tugas: document.getElementById('agen-tugas'),
+      ikut: document.getElementById('agen-ikut'),
+      tutup: document.getElementById('agen-tutup')
+    };
+    let agenDipilih = null;
+    let agenDiikuti = null;
+    let jedaStatusAgen = 0;
+    function agenDiBawah(e) {
+      const kotakKanvas = renderer.domElement.getBoundingClientRect();
+      titik.x = ((e.clientX - kotakKanvas.left) / kotakKanvas.width) * 2 - 1;
+      titik.y = -((e.clientY - kotakKanvas.top) / kotakKanvas.height) * 2 + 1;
+      raycaster.setFromCamera(titik, kamera);
+      const kena = raycaster.intersectObjects(dunia.info.hitAgen, false);
+      return kena.length ? kena[0].object.userData.agenId : null;
+    }
+    function kapitalAwal(teks) { return teks.charAt(0).toUpperCase() + teks.slice(1); }
+    function isiKartuAgen(id) {
+      const kartu = Array.prototype.filter.call(document.querySelectorAll('#isi-jobdesk .kartu'), function (k) { return k.getAttribute('data-agen') === id; })[0];
+      if (!kartu) return;
+      elAgen.titik.style.cssText = kartu.querySelector('.titik').style.cssText;
+      elAgen.jabatan.textContent = kartu.querySelector('h3').textContent;
+      elAgen.chip.className = kartu.querySelector('.chip').className;
+      elAgen.chip.textContent = kartu.querySelector('.chip').textContent;
+      elAgen.nama.textContent = kartu.querySelector('.nama').textContent;
+      elAgen.tugas.textContent = kartu.querySelector('p').textContent;
+    }
+    function perbaruiStatusAgen() {
+      if (!agenDipilih) return;
+      elAgen.status.textContent = 'Sekarang: ' + agenDipilih.statusTeks() + '.';
+    }
+    function aturIkutAgen(hidup) {
+      elAgen.ikut.setAttribute('aria-pressed', String(hidup));
+      agenDiikuti = hidup ? agenDipilih : null;
+    }
+    function pilihAgen(id) {
+      const a = dunia.info.agen[id];
+      if (!a) return;
+      hentikanTur();
+      tandaiFokus('');
+      agenDipilih = a;
+      agenDiikuti = null;
+      isiKartuAgen(id);
+      perbaruiStatusAgen();
+      elAgen.kartu.hidden = false;
+      elAgen.ikut.setAttribute('aria-pressed', 'true');
+      const p = a.grup.position;
+      tweenKamera(new THREE.Vector3(p.x, 1.8, p.z), 2.4, null, function () {
+        if (agenDipilih === a && elAgen.ikut.getAttribute('aria-pressed') === 'true') agenDiikuti = a;
+      });
+    }
+    function tutupAgen() {
+      agenDipilih = null;
+      agenDiikuti = null;
+      elAgen.kartu.hidden = true;
+    }
+    // Dipanggil tiap frame: kamera mengikuti agent dengan halus, teks status diperbarui tiap setengah detik.
+    function perbaruiAgenFrame(dt) {
+      if (!agenDipilih) return;
+      if (agenDiikuti && !tween && !modeTv) {
+        const p = agenDiikuti.grup.position;
+        const dx = (p.x - kontrol.target.x) * 0.12;
+        const dz = (p.z - kontrol.target.z) * 0.12;
+        kontrol.target.x += dx;
+        kontrol.target.z += dz;
+        kamera.position.x += dx;
+        kamera.position.z += dz;
+      }
+      jedaStatusAgen += dt;
+      if (jedaStatusAgen > 0.5) {
+        jedaStatusAgen = 0;
+        perbaruiStatusAgen();
+      }
+    }
+    elAgen.ikut.addEventListener('click', function () { aturIkutAgen(elAgen.ikut.getAttribute('aria-pressed') !== 'true'); });
+    elAgen.tutup.addEventListener('click', tutupAgen);
+    // ==== AGEN END
 
     /* Ketuk layar di dinding office untuk membuka dashboard, atau TV untuk memutar YouTube */
     const raycaster = new THREE.Raycaster();
@@ -3018,13 +3189,19 @@
       if (!awal) return;
       const geser = Math.hypot(e.clientX - awal.x, e.clientY - awal.y);
       awal = null;
+      if (geser >= 6) return;
+      const idAgen = modeTv ? null : agenDiBawah(e);
+      if (idAgen) {
+        pilihAgen(idAgen);
+        return;
+      }
       const sasaran = targetDiBawah(e);
-      if (geser < 6 && sasaran) {
+      if (sasaran) {
         if (sasaran === dunia.info.tv) masukModeTv(); else window.location.href = DASHBOARD_URL;
       }
     });
     renderer.domElement.addEventListener('pointermove', function (e) {
-      renderer.domElement.style.cursor = targetDiBawah(e) ? 'pointer' : 'grab';
+      renderer.domElement.style.cursor = ((!modeTv && agenDiBawah(e)) || targetDiBawah(e)) ? 'pointer' : 'grab';
     });
 
     /* Penghubung data asli (belum dipakai kalau DATA_URL kosong).
