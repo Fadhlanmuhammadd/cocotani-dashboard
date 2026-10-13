@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>Kebun dan office Cocotani (v18)</title>
+  <title>Kebun dan office Cocotani (v19)</title>
   <style>
     :root {
       --latar: #0a110b;
@@ -3118,10 +3118,10 @@
     };
     let urutanTanya = 0;
     function pesanGalatTanya(galat) {
-      if (galat === 'belum_diatur') return 'Fitur tanya belum aktif: kunci Claude API belum dipasang di Apps Script.';
+      if (galat === 'belum_diatur') return 'Fitur tanya belum aktif: kunci Gemini belum dipasang di Apps Script.';
       if (galat === 'batas') return 'Batas pertanyaan hari ini sudah tercapai. Coba lagi besok.';
       if (galat === 'sibuk') return 'AI sedang sibuk. Coba lagi sebentar lagi.';
-      if (galat === 'kunci') return 'Kunci Claude API ditolak. Periksa kunci di Apps Script.';
+      if (galat === 'kunci') return 'Kunci Gemini ditolak. Periksa kunci di Apps Script.';
       return 'Belum bisa mendapat jawaban. Coba lagi nanti.';
     }
     function resetTanya() {
